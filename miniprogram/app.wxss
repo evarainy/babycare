@@ -1,0 +1,109 @@
+page {
+  background-color: #F8F9FA;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+  color: #333333;
+}
+
+.container {
+  padding: 0 16rpx;
+}
+
+.card {
+  background: #FFFFFF;
+  border-radius: 20rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #FF8FAB, #FF6B9D);
+  color: #FFFFFF;
+  border-radius: 50rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  border: none;
+  padding: 24rpx 48rpx;
+}
+
+.btn-secondary {
+  background: #F5F5F5;
+  color: #666666;
+  border-radius: 50rpx;
+  font-size: 32rpx;
+  border: none;
+  padding: 24rpx 48rpx;
+}
+
+.text-primary {
+  color: #FF8FAB;
+}
+
+.text-gray {
+  color: #999999;
+}
+
+.text-small {
+  font-size: 24rpx;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.flex-between {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333333;
+  margin-bottom: 24rpx;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80rpx 0;
+  color: #CCCCCC;
+}
+
+.empty-state text {
+  font-size: 28rpx;
+  margin-top: 16rpx;
+}
+
+.tag {
+  display: inline-block;
+  padding: 6rpx 20rpx;
+  border-radius: 30rpx;
+  font-size: 22rpx;
+}
+
+.tag-pink {
+  background: #FFF0F5;
+  color: #FF8FAB;
+}
+
+.tag-blue {
+  background: #EFF6FF;
+  color: #3B82F6;
+}
+
+.tag-green {
+  background: #F0FDF4;
+  color: #22C55E;
+}
+
+.tag-orange {
+  background: #FFF7ED;
+  color: #F97316;
+}

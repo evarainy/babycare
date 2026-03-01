@@ -1,0 +1,80 @@
+<view class="page {{darkMode ? 'page-dark' : ''}}">
+  <view class="period-selector">
+    <view
+      class="period-btn {{period === item.value ? 'active' : ''}}"
+      wx:for="{{periodOptions}}"
+      wx:key="value"
+      bindtap="selectPeriod"
+      data-period="{{item.value}}"
+    >{{item.label}}</view>
+  </view>
+
+  <view class="summary-card card">
+    <view class="card-title">📊 {{periodLabel}}统计</view>
+    <view class="stats-grid">
+      <view class="stat-item">
+        <text class="stat-val">{{report.summary.totalCount}}</text>
+        <text class="stat-key">总次数</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-val">{{report.summary.totalAmount}}</text>
+        <text class="stat-key">总奶量(ml)</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-val">{{report.summary.avgDailyAmount}}</text>
+        <text class="stat-key">日均奶量</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-val">{{report.summary.avgDailyCount}}</text>
+        <text class="stat-key">日均次数</text>
+      </view>
+    </view>
+    <view class="avg-interval" wx:if="{{report.summary.avgIntervalMinutes}}">
+      <text class="interval-label">平均喂养间隔</text>
+      <text class="interval-val">{{avgIntervalText}}</text>
+    </view>
+  </view>
+
+  <view class="chart-card card">
+    <view class="card-title">📈 每日奶量趋势</view>
+    <view class="bar-chart">
+      <view class="bar-item" wx:for="{{chartData}}" wx:key="date">
+        <view class="bar-wrap">
+          <view class="bar-fill" style="height: {{item.heightPercent}}%"></view>
+        </view>
+        <text class="bar-label">{{item.dateLabel}}</text>
+        <text class="bar-val">{{item.totalAmount}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="daily-list card">
+    <view class="card-title">📅 每日明细</view>
+    <view class="daily-item" wx:for="{{report.days}}" wx:key="date">
+      <view class="daily-header">
+        <text class="daily-date">{{item.date}}</text>
+        <view class="daily-stats">
+          <text class="daily-count">{{item.count}}次</text>
+          <text class="daily-amount">{{item.totalAmount}}ml</text>
+        </view>
+      </view>
+      <view class="daily-bar">
+        <view class="daily-bar-fill" style="width: {{item.amountPercent}}%"></view>
+      </view>
+    </view>
+  </view>
+
+  <view class="insight-card card" wx:if="{{insights.length > 0}}">
+    <view class="card-title">💡 喂养洞察</view>
+    <view class="insight-item" wx:for="{{insights}}" wx:key="*this">
+      <text class="insight-icon">{{item.icon}}</text>
+      <text class="insight-text">{{item.text}}</text>
+    </view>
+  </view>
+
+  <view class="share-section">
+    <button class="share-btn" open-type="share">分享给家人</button>
+  </view>
+</view>
+
+<voice-floating-button bind:recordsuccess="onVoiceRecordSuccess" />

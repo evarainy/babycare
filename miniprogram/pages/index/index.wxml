@@ -1,0 +1,225 @@
+<view class="page {{darkMode ? 'page-dark' : ''}}">
+  <view class="header">
+    <view class="header-top">
+      <view class="greeting">
+        <text class="greeting-text">{{greetingText}}</text>
+        <text class="date-text">{{todayDate}}</text>
+      </view>
+      <view class="avatar" bindtap="goSettings">
+        <image src="{{userAvatar}}" class="avatar-img" mode="aspectFill" />
+      </view>
+    </view>
+
+
+    <view class="baby-hero">
+      <image class="baby-hero-bg" src="{{babyProfile.photoUrl || userAvatar}}" mode="aspectFill" />
+      <view class="baby-hero-overlay"></view>
+      <view class="baby-hero-content">
+        <view class="baby-main">
+          <text class="baby-name">{{babyProfile.name}}</text>
+          <text class="baby-age">{{babyProfile.birthday ? ("出生" + babyProfile.ageText) : "请在设置页完善生日"}}</text>
+          <view class="baby-metrics">
+            <text class="baby-metric">体重 {{babyProfile.weightG !== "" ? (babyProfile.weightG + "g") : "未填写"}}</text>
+            <text class="baby-metric-divider">·</text>
+            <text class="baby-metric">身高 {{babyProfile.heightCm !== "" ? (babyProfile.heightCm + "cm") : "未填写"}}</text>
+          </view>
+        </view>
+        <image class="baby-avatar" src="{{babyProfile.photoUrl || userAvatar}}" mode="aspectFill" />
+      </view>
+    </view>
+
+    <view class="summary-cards">
+      <view class="summary-card summary-card-combined">
+        <view class="summary-top-label">今日喂养概览</view>
+        <view class="summary-combined-row">
+          <view class="summary-kpi-item">
+            <text class="summary-kpi-num">{{todaySummary.todayCount}}</text>
+            <text class="summary-kpi-label">今日次数</text>
+          </view>
+          <view class="summary-kpi-divider"></view>
+          <view class="summary-kpi-item">
+            <text class="summary-kpi-num {{intervalWarning ? 'warning' : ''}}">{{intervalText}}</text>
+            <text class="summary-kpi-label">距上次</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="summary-card summary-card-milk">
+        <text class="summary-num">{{todaySummary.totalAmount || 0}}</text>
+        <text class="summary-label">总奶量(ml)</text>
+        <view class="milk-breakdown">
+          <view class="milk-item">
+            <text class="milk-item-label">奶粉</text>
+            <text class="milk-item-value">{{todaySummary.formulaAmount || 0}}ml</text>
+          </view>
+          <view class="milk-item">
+            <text class="milk-item-label">母乳</text>
+            <text class="milk-item-value">{{todaySummary.breastMilkAmount || 0}}ml</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="summary-card summary-card-food">
+        <text class="summary-num">{{todaySummary.foodAmount || 0}}</text>
+        <text class="summary-label">辅食(g)</text>
+        <text class="summary-sub-count">{{todaySummary.foodCount || 0}}次</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="quick-actions">
+    <view class="quick-title">快速记录</view>
+    <view class="quick-btns">
+      <view class="quick-btn" bindtap="quickRecord" data-type="breastfeeding">
+        <text class="quick-icon">🤱</text>
+        <text class="quick-text">亲喂</text>
+      </view>
+      <view class="quick-btn" bindtap="quickRecord" data-type="bottle">
+        <text class="quick-icon">🍼</text>
+        <text class="quick-text">瓶喂</text>
+      </view>
+      <view class="quick-btn" bindtap="quickRecord" data-type="food">
+        <text class="quick-icon">🥣</text>
+        <text class="quick-text">辅食</text>
+      </view>
+      <view class="quick-btn" bindtap="quickRecord" data-type="swimming">
+        <text class="quick-icon">🏊</text>
+        <text class="quick-text">游泳</text>
+      </view>
+      <view class="quick-btn" bindtap="quickRecord" data-type="diaper">
+        <text class="quick-icon">👶</text>
+        <text class="quick-text">尿布</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="voice-section">
+    <view class="voice-input-area">
+      <input
+        class="voice-input"
+        placeholder="输入或语音描述，如：喂了左边100ml"
+        value="{{voiceText}}"
+        bindinput="onVoiceInput"
+        confirm-type="send"
+        bindconfirm="submitVoiceText"
+      />
+      <view class="voice-btn {{isRecording ? 'recording' : ''}}" bindtouchstart="startRecord" bindtouchend="stopRecord">
+        <text class="voice-icon">🎤</text>
+      </view>
+    </view>
+    <button class="submit-btn" bindtap="submitVoiceText" wx:if="{{voiceText}}">
+      AI解析并记录
+    </button>
+  </view>
+
+  <view class="timeline-section">
+    <view class="flex-between">
+      <text class="section-title">今日时间轴</text>
+      <text class="view-all" bindtap="goRecord">查看全部</text>
+    </view>
+
+    <view wx:if="{{todayRecords.length === 0}}" class="empty-state">
+      <text>🍼</text>
+      <text>今天还没有记录</text>
+      <text class="text-small text-gray">点击上方快速记录</text>
+    </view>
+
+    <view class="timeline" wx:else>
+      <view class="timeline-item" wx:for="{{todayRecords}}" wx:key="_id">
+        <view class="timeline-dot {{item.type}}"></view>
+        <view class="timeline-content card">
+          <view class="flex-between">
+            <view class="flex-row">
+              <text class="record-icon">{{item.typeIcon}}</text>
+              <text class="record-type">{{item.typeLabel}}</text>
+              <view class="tag tag-pink" wx:if="{{item.feedingType}}">{{item.feedingType}}</view>
+              <view class="tag tag-blue" wx:if="{{item.side}}">{{item.sideLabel}}</view>
+            </view>
+            <text class="record-time">{{item.timeText}}</text>
+          </view>
+          <view class="record-detail" wx:if="{{item.amount || item.duration}}">
+            <text wx:if="{{item.amount}}">{{item.amountText}}</text>
+            <text wx:if="{{item.duration}}">{{item.duration}}分钟</text>
+          </view>
+          <text class="record-note text-gray text-small" wx:if="{{item.note}}">{{item.note}}</text>
+          <view class="record-actions">
+            <text class="action-btn" bindtap="editRecord" data-id="{{item._id}}">编辑</text>
+            <text class="action-btn danger" bindtap="deleteRecord" data-id="{{item._id}}">删除</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="pending-section" wx:if="{{pendingRecords.length > 0}}">
+    <view class="section-title">⚠️ 待确认记录</view>
+    <view class="pending-item card" wx:for="{{pendingRecords}}" wx:key="_id">
+      <view class="flex-between">
+        <text>{{item.typeIcon}} {{item.typeLabel}} {{item.amount}}ml {{item.sideLabel}}</text>
+        <view class="flex-row">
+          <text class="action-btn" bindtap="confirmRecord" data-id="{{item._id}}">确认</text>
+          <text class="action-btn danger" bindtap="deleteRecord" data-id="{{item._id}}">删除</text>
+        </view>
+      </view>
+      <text class="text-small text-gray">来源：{{item.source === 'wechat_bot' ? '微信群' : 'Siri'}}</text>
+    </view>
+  </view>
+</view>
+
+<view class="quick-modal" wx:if="{{showQuickModal}}">
+  <view class="modal-mask" bindtap="closeModal"></view>
+  <view class="modal-content">
+    <view class="modal-title">快速记录 - {{quickModalTitle}}</view>
+
+    <view class="amount-section" wx:if="{{quickModalType === 'breastfeeding'}}">
+      <view class="side-btns">
+        <view class="side-btn {{quickSide === '左' ? 'active' : ''}}" bindtap="selectSide" data-side="左">左侧</view>
+        <view class="side-btn {{quickSide === '右' ? 'active' : ''}}" bindtap="selectSide" data-side="右">右侧</view>
+        <view class="side-btn {{quickSide === '双' ? 'active' : ''}}" bindtap="selectSide" data-side="双">双侧</view>
+      </view>
+      <text class="amount-label">时长 (分钟)</text>
+      <view class="amount-btns">
+        <view class="amount-btn" wx:for="{{durationPresets}}" wx:key="*this" bindtap="selectDuration" data-duration="{{item}}">{{item}}</view>
+      </view>
+      <input class="amount-input" type="number" placeholder="自定义时长" value="{{quickDuration}}" bindinput="onDurationInput" />
+    </view>
+
+    <view class="amount-section" wx:if="{{quickModalType === 'bottle'}}">
+      <text class="amount-label">瓶喂类型</text>
+      <view class="side-btns">
+        <view class="side-btn {{quickBottleType === '奶粉' ? 'active' : ''}}" bindtap="selectBottleType" data-btype="奶粉">奶粉</view>
+        <view class="side-btn {{quickBottleType === '母乳' ? 'active' : ''}}" bindtap="selectBottleType" data-btype="母乳">母乳</view>
+        <view class="side-btn {{quickBottleType === '水' ? 'active' : ''}}" bindtap="selectBottleType" data-btype="水">水</view>
+        <view class="side-btn {{quickBottleType === '补剂' ? 'active' : ''}}" bindtap="selectBottleType" data-btype="补剂">补剂</view>
+      </view>
+      <text class="amount-label">奶量 (ml)</text>
+      <view class="amount-btns">
+        <view class="amount-btn" wx:for="{{amountPresets}}" wx:key="*this" bindtap="selectAmount" data-amount="{{item}}">{{item}}</view>
+      </view>
+      <input class="amount-input" type="number" placeholder="自定义奶量" value="{{quickAmount}}" bindinput="onAmountInput" />
+    </view>
+
+    <view class="amount-section" wx:if="{{quickModalType === 'food'}}">
+      <text class="amount-label">辅食量 (g)</text>
+      <view class="amount-btns">
+        <view class="amount-btn" wx:for="{{foodPresets}}" wx:key="*this" bindtap="selectAmount" data-amount="{{item}}">{{item}}</view>
+      </view>
+      <input class="amount-input" type="number" placeholder="自定义克数" value="{{quickAmount}}" bindinput="onAmountInput" />
+    </view>
+
+    <view class="amount-section" wx:if="{{quickModalType === 'swimming'}}">
+      <text class="amount-label">时长 (分钟)</text>
+      <view class="amount-btns">
+        <view class="amount-btn" wx:for="{{durationPresets}}" wx:key="*this" bindtap="selectDuration" data-duration="{{item}}">{{item}}</view>
+      </view>
+      <input class="amount-input" type="number" placeholder="自定义时长" value="{{quickDuration}}" bindinput="onDurationInput" />
+    </view>
+
+    <view class="modal-actions">
+      <button class="btn-secondary" bindtap="closeModal">取消</button>
+      <button class="btn-primary" bindtap="submitQuickRecord">确认记录</button>
+    </view>
+  </view>
+</view>
+
+<voice-floating-button bind:recordsuccess="onVoiceRecordSuccess" />

@@ -1,0 +1,15 @@
+{
+  "name": "babycare-api",
+  "version": "1.0.0",
+  "description": "宝宝成长手记 - 主API云函数",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "openai": "^4.0.0",
+    "dayjs": "^1.11.0"
+  },
+  "cloudfunction-config": {
+    "memorySize": 256,
+    "timeout": 30
+  }
+}

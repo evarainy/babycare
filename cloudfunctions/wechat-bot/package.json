@@ -1,0 +1,15 @@
+{
+  "name": "wechat-bot",
+  "version": "1.0.0",
+  "description": "微信群机器人云函数 - 接收企业微信群消息并处理",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "openai": "^4.0.0",
+    "dayjs": "^1.11.0"
+  },
+  "cloudfunction-config": {
+    "memorySize": 256,
+    "timeout": 30
+  }
+}

@@ -1,0 +1,249 @@
+.page {
+  padding: 24rpx 32rpx 120rpx;
+}
+
+.period-selector {
+  display: flex;
+  background: #FFFFFF;
+  border-radius: 50rpx;
+  padding: 8rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+}
+
+.period-btn {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx;
+  border-radius: 50rpx;
+  font-size: 28rpx;
+  color: #666666;
+  transition: all 0.2s;
+}
+
+.period-btn.active {
+  background: linear-gradient(135deg, #FF8FAB, #FF6B9D);
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.card-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  margin-bottom: 24rpx;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24rpx;
+  margin-bottom: 24rpx;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #FFF8FA;
+  border-radius: 16rpx;
+  padding: 24rpx;
+}
+
+.stat-val {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: #FF8FAB;
+}
+
+.stat-key {
+  font-size: 22rpx;
+  color: #999999;
+  margin-top: 8rpx;
+}
+
+.avg-interval {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #F8F9FA;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+}
+
+.interval-label {
+  font-size: 28rpx;
+  color: #666666;
+}
+
+.interval-val {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #FF8FAB;
+}
+
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 200rpx;
+  padding-bottom: 48rpx;
+  position: relative;
+}
+
+.bar-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.bar-wrap {
+  width: 100%;
+  height: 160rpx;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 4rpx;
+}
+
+.bar-fill {
+  width: 100%;
+  background: linear-gradient(180deg, #FF8FAB, #FFB8CC);
+  border-radius: 8rpx 8rpx 0 0;
+  min-height: 4rpx;
+  transition: height 0.3s;
+}
+
+.bar-label {
+  font-size: 18rpx;
+  color: #999999;
+  margin-top: 8rpx;
+}
+
+.bar-val {
+  font-size: 16rpx;
+  color: #FF8FAB;
+  font-weight: 600;
+}
+
+.daily-list {
+  margin-bottom: 24rpx;
+}
+
+.daily-item {
+  margin-bottom: 20rpx;
+}
+
+.daily-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.daily-date {
+  font-size: 26rpx;
+  color: #666666;
+}
+
+.daily-stats {
+  display: flex;
+  gap: 16rpx;
+}
+
+.daily-count {
+  font-size: 24rpx;
+  color: #999999;
+}
+
+.daily-amount {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #FF8FAB;
+}
+
+.daily-bar {
+  height: 12rpx;
+  background: #F5F5F5;
+  border-radius: 6rpx;
+  overflow: hidden;
+}
+
+.daily-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #FF8FAB, #FFB8CC);
+  border-radius: 6rpx;
+  transition: width 0.3s;
+}
+
+.insight-card {
+  margin-bottom: 24rpx;
+}
+
+.insight-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 16rpx;
+  padding: 16rpx;
+  background: #FFF8FA;
+  border-radius: 12rpx;
+}
+
+.insight-icon {
+  font-size: 32rpx;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+}
+
+.insight-text {
+  font-size: 26rpx;
+  color: #555555;
+  line-height: 1.6;
+}
+
+.share-btn {
+  background: linear-gradient(135deg, #FF8FAB, #FF6B9D);
+  color: #FFFFFF;
+  border-radius: 50rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  border: none;
+  padding: 28rpx;
+  width: 100%;
+}
+
+.page-dark {
+  background: #111827;
+}
+
+.page-dark .period-selector,
+.page-dark .summary-grid,
+.page-dark .chart-card,
+.page-dark .daily-list,
+.page-dark .insight-card,
+.page-dark .card {
+  background: #1f2937;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.page-dark .period-btn,
+.page-dark .summary-label,
+.page-dark .summary-value,
+.page-dark .card-title,
+.page-dark .chart-title,
+.page-dark .chart-date,
+.page-dark .chart-amount,
+.page-dark .daily-date,
+.page-dark .daily-meta,
+.page-dark .insight-text,
+.page-dark .text-gray,
+.page-dark .text-small {
+  color: #e5e7eb !important;
+}
+
+.page-dark .period-btn.active {
+  background: rgba(255, 143, 171, 0.18);
+  color: #ffd4df !important;
+}
+
