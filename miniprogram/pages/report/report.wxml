@@ -66,7 +66,7 @@
 
   <view class="insight-card card" wx:if="{{insights.length > 0}}">
     <view class="card-title">💡 喂养洞察</view>
-    <view class="insight-item" wx:for="{{insights}}" wx:key="*this">
+    <view class="insight-item" wx:for="{{insights}}" wx:key="text">
       <text class="insight-icon">{{item.icon}}</text>
       <text class="insight-text">{{item.text}}</text>
     </view>

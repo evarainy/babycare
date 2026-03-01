@@ -1,7 +1,5 @@
 {
   "navigationBarTitleText": "设置",
-  "enableShareAppMessage": true,
-  "enableShareTimeline": false,
   "usingComponents": {
     "voice-floating-button": "/components/voice-floating-button/index"
   }
