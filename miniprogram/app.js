@@ -3,7 +3,7 @@ App({
     userInfo: null,
     familyId: null,
     openid: null,
-    cloudEnv: 'cloudbase-4gwoq4vkebaa7cd3',
+    cloudEnv: '',
     editRecordId: null,
     pendingInviteCode: '',
     joiningFamily: false,
@@ -12,12 +12,37 @@ App({
 
   onLaunch(options) {
     this.globalData.darkMode = !!wx.getStorageSync('darkMode')
-    wx.cloud.init({
-      env: this.globalData.cloudEnv,
+    this.globalData.cloudEnv = this.resolveCloudEnv()
+
+    const initOptions = {
       traceUser: true
+    }
+    if (this.globalData.cloudEnv) {
+      initOptions.env = this.globalData.cloudEnv
+    }
+
+    wx.cloud.init({
+      ...initOptions
     })
     this.captureInviteCode(options)
     this.initUser()
+  },
+
+  resolveCloudEnv() {
+    const fromStorage = wx.getStorageSync('CLOUD_ENV_ID')
+    if (fromStorage && typeof fromStorage === 'string') {
+      return fromStorage.trim()
+    }
+
+    try {
+      const ext = wx.getExtConfigSync ? wx.getExtConfigSync() : null
+      const fromExt = ext && (ext.CLOUD_ENV_ID || ext.cloudEnv || ext.env)
+      if (fromExt && typeof fromExt === 'string') {
+        return fromExt.trim()
+      }
+    } catch (e) {}
+
+    return ''
   },
 
   onShow(options) {
