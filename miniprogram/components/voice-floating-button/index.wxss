@@ -1,0 +1,231 @@
+.voice-floating-wrap {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(98rpx + env(safe-area-inset-bottom));
+  z-index: 999;
+}
+
+.voice-floating-button {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 60rpx;
+  position: relative;
+  overflow: visible;
+  border: 1rpx solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.18), inset 0 2rpx 10rpx rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+
+.voice-floating-button.recording {
+  transform: scale(1.08);
+  box-shadow: 0 14rpx 36rpx rgba(255, 111, 145, 0.35);
+  animation: breath 1.25s ease-in-out infinite;
+}
+
+.voice-floating-button.cancel {
+  background: rgba(255, 83, 111, 0.45);
+  border-color: rgba(255, 184, 194, 0.8);
+  animation: none;
+}
+
+.pulse-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 132rpx;
+  height: 132rpx;
+  border-radius: 66rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.46);
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ring-a {
+  animation: ripple 1.4s ease-out infinite;
+}
+
+.ring-b {
+  animation: ripple 1.4s ease-out 0.7s infinite;
+}
+
+.voice-floating-button.cancel .pulse-ring {
+  border-color: rgba(255, 214, 220, 0.65);
+}
+
+.voice-bg {
+  position: absolute;
+  inset: -6rpx;
+  width: 132rpx;
+  height: 132rpx;
+  filter: blur(6rpx);
+  opacity: 0.65;
+  border-radius: 66rpx;
+}
+
+.voice-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 60rpx;
+  background: linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0.18));
+}
+
+.voice-icon {
+  position: relative;
+  z-index: 2;
+  width: 46rpx;
+  height: 54rpx;
+  transition: transform 160ms ease;
+}
+
+.voice-floating-button.recording .voice-icon {
+  transform: scale(1.06);
+}
+
+.mic-head {
+  position: absolute;
+  left: 11rpx;
+  top: 2rpx;
+  width: 24rpx;
+  height: 26rpx;
+  border: 4rpx solid #fff;
+  border-radius: 14rpx;
+}
+
+.mic-stem {
+  position: absolute;
+  left: 21rpx;
+  top: 30rpx;
+  width: 4rpx;
+  height: 10rpx;
+  background: #fff;
+  border-radius: 2rpx;
+}
+
+.mic-arc {
+  position: absolute;
+  left: 8rpx;
+  top: 26rpx;
+  width: 30rpx;
+  height: 18rpx;
+  border: 4rpx solid #fff;
+  border-top: none;
+  border-radius: 0 0 18rpx 18rpx;
+}
+
+.mic-base {
+  position: absolute;
+  left: 13rpx;
+  top: 48rpx;
+  width: 20rpx;
+  height: 4rpx;
+  background: #fff;
+  border-radius: 2rpx;
+}
+
+.icon-close {
+  width: 42rpx;
+  height: 42rpx;
+}
+
+.close-line {
+  position: absolute;
+  left: 19rpx;
+  top: 2rpx;
+  width: 4rpx;
+  height: 38rpx;
+  background: #fff;
+  border-radius: 2rpx;
+}
+
+.close-line-a {
+  transform: rotate(45deg);
+}
+
+.close-line-b {
+  transform: rotate(-45deg);
+}
+
+.voice-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+.voice-mask.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.voice-panel {
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  transform: translate(-50%, -50%) scale(0.96);
+  width: 320rpx;
+  padding: 28rpx 24rpx;
+  border-radius: 24rpx;
+  background: rgba(0, 0, 0, 0.68);
+  color: #fff;
+  text-align: center;
+  opacity: 0.94;
+  transition: background-color 180ms ease, transform 180ms ease, opacity 180ms ease;
+}
+
+.voice-mask.show .voice-panel {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
+
+.voice-panel.cancel {
+  background: rgba(212, 55, 81, 0.9);
+}
+
+.voice-title {
+  font-size: 28rpx;
+  margin-bottom: 20rpx;
+}
+
+.voice-bars {
+  height: 48rpx;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 10rpx;
+  transition: transform 180ms ease;
+}
+
+.voice-bars.cancel {
+  transform: scale(1.05);
+}
+
+.bar {
+  width: 10rpx;
+  min-height: 12rpx;
+  border-radius: 6rpx;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+@keyframes breath {
+  0%, 100% { transform: scale(1.06); }
+  50% { transform: scale(1.11); }
+}
+
+@keyframes ripple {
+  0% {
+    transform: translate(-50%, -50%) scale(0.95);
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.35);
+    opacity: 0;
+  }
+}

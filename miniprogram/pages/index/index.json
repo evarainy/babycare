@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "宝宝成长手记",
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "voice-floating-button": "/components/voice-floating-button/index"
+  }
+}

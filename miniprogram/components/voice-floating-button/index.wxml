@@ -1,0 +1,36 @@
+<view class="voice-floating-wrap">
+  <view class="voice-mask {{isRecording ? 'show' : ''}}" catchtouchmove="noop">
+    <view class="voice-panel {{isCancelMode ? 'cancel' : ''}}">
+      <view class="voice-title">{{hintText}}</view>
+      <view class="voice-bars {{isCancelMode ? 'cancel' : ''}}">
+        <view class="bar" wx:for="{{levelBars}}" wx:for-index="idx" wx:key="idx" style="height: {{item}}rpx"></view>
+      </view>
+    </view>
+  </view>
+
+  <view
+    class="voice-floating-button {{isRecording ? 'recording' : ''}} {{isCancelMode ? 'cancel' : ''}}"
+    catchtouchstart="onTouchStart"
+    catchtouchmove="onTouchMove"
+    catchtouchend="onTouchEnd"
+    catchtouchcancel="onTouchCancel"
+  >
+    <view class="pulse-ring ring-a" wx:if="{{isRecording}}"></view>
+    <view class="pulse-ring ring-b" wx:if="{{isRecording}}"></view>
+
+    <image class="voice-bg" src="{{avatarUrl}}" mode="aspectFill"/>
+    <view class="voice-overlay"></view>
+
+    <view class="voice-icon" wx:if="{{!isCancelMode}}">
+      <view class="mic-head"></view>
+      <view class="mic-stem"></view>
+      <view class="mic-arc"></view>
+      <view class="mic-base"></view>
+    </view>
+
+    <view class="voice-icon icon-close" wx:else>
+      <view class="close-line close-line-a"></view>
+      <view class="close-line close-line-b"></view>
+    </view>
+  </view>
+</view>

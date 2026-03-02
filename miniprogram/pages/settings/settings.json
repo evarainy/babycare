@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "设置",
+  "usingComponents": {
+    "voice-floating-button": "/components/voice-floating-button/index"
+  }
+}

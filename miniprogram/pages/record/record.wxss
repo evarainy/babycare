@@ -1,0 +1,410 @@
+.page {
+  padding: 24rpx 32rpx 160rpx;
+  min-height: 100vh;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.page-lock {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.date-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24rpx;
+  gap: 32rpx;
+}
+
+.nav-btn {
+  font-size: 48rpx;
+  color: #FF8FAB;
+  padding: 0 16rpx;
+}
+
+.nav-btn.disabled {
+  color: #CCCCCC;
+}
+
+.date-text {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333333;
+  padding: 12rpx 32rpx;
+  background: #FFFFFF;
+  border-radius: 50rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+}
+
+.day-summary {
+  display: flex;
+  justify-content: space-around;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.summary-val {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #FF8FAB;
+}
+
+.summary-key {
+  font-size: 22rpx;
+  color: #999999;
+  margin-top: 4rpx;
+}
+
+.records-list {
+  margin-bottom: 180rpx;
+}
+
+.record-item {
+  margin-bottom: 16rpx;
+  padding: 24rpx;
+}
+
+.record-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.type-icon {
+  font-size: 48rpx;
+  margin-right: 16rpx;
+}
+
+.type-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+
+.record-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.record-amount {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #FF8FAB;
+}
+
+.record-duration {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #3B82F6;
+}
+
+.record-time-text {
+  font-size: 24rpx;
+  color: #999999;
+  margin-top: 4rpx;
+}
+
+.record-note-text {
+  display: block;
+  font-size: 26rpx;
+  color: #666666;
+  margin-top: 12rpx;
+  padding-top: 12rpx;
+  border-top: 1rpx solid #F5F5F5;
+}
+
+.record-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12rpx;
+}
+
+.interval-text {
+  font-size: 22rpx;
+  color: #AAAAAA;
+}
+
+.record-ops {
+  display: flex;
+  gap: 24rpx;
+}
+
+.record-ops text {
+  font-size: 26rpx;
+  color: #999999;
+}
+
+.record-ops .danger {
+  color: #FF4D4F;
+}
+
+.add-btn-wrap {
+  position: fixed;
+  bottom: 120rpx;
+  left: 32rpx;
+  right: 32rpx;
+}
+
+.add-btn {
+  background: linear-gradient(135deg, #FF8FAB, #FF6B9D);
+  color: #FFFFFF;
+  border-radius: 50rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  border: none;
+  padding: 28rpx;
+  box-shadow: 0 8rpx 24rpx rgba(255, 143, 171, 0.4);
+}
+
+.edit-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.modal-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-body {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #FFFFFF;
+  border-radius: 40rpx 40rpx 0 0;
+  height: 88vh;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32rpx 32rpx 0;
+}
+
+.modal-title {
+  font-size: 36rpx;
+  font-weight: 700;
+}
+
+.modal-close {
+  font-size: 36rpx;
+  color: #999999;
+  padding: 8rpx;
+}
+
+.modal-scroll {
+  flex: 1;
+  min-height: 0;
+  padding: 20rpx 32rpx 8rpx;
+}
+
+.form-group {
+  margin-bottom: 24rpx;
+}
+
+.form-label {
+  display: block;
+  font-size: 28rpx;
+  color: #666666;
+  margin-bottom: 16rpx;
+}
+
+.type-selector-scroll {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.type-selector {
+  display: inline-flex;
+  gap: 12rpx;
+  padding-right: 12rpx;
+}
+
+.type-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 124rpx;
+  min-height: 94rpx;
+  padding: 12rpx 10rpx;
+  border-radius: 16rpx;
+  background: #F5F5F5;
+  font-size: 24rpx;
+  gap: 6rpx;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.type-option.active {
+  background: #FFF0F5;
+  color: #FF8FAB;
+}
+
+.option-row {
+  display: flex;
+  gap: 16rpx;
+  flex-wrap: wrap;
+}
+
+.option-btn {
+  padding: 16rpx 32rpx;
+  border-radius: 50rpx;
+  background: #F5F5F5;
+  font-size: 28rpx;
+  color: #666666;
+}
+
+.option-btn.active {
+  background: #FFF0F5;
+  color: #FF8FAB;
+  font-weight: 600;
+}
+
+.amount-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-bottom: 16rpx;
+}
+
+.preset-btn {
+  padding: 12rpx 28rpx;
+  border-radius: 50rpx;
+  background: #F5F5F5;
+  font-size: 28rpx;
+  color: #666666;
+}
+
+.preset-btn.active {
+  background: #FFF0F5;
+  color: #FF8FAB;
+  font-weight: 600;
+}
+
+.form-input-wrap {
+  width: 100%;
+  min-width: 0;
+}
+
+.form-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 88rpx;
+  border: 2rpx solid #EEEEEE;
+  border-radius: 16rpx;
+  padding: 0 24rpx;
+  font-size: 30rpx;
+  line-height: 88rpx;
+  box-sizing: border-box;
+  background: #FFFFFF;
+}
+
+.time-picker {
+  border: 2rpx solid #EEEEEE;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  font-size: 30rpx;
+  color: #333333;
+}
+
+.form-textarea {
+  width: 100%;
+  border: 2rpx solid #EEEEEE;
+  border-radius: 16rpx;
+  padding: 16rpx 24rpx;
+  font-size: 28rpx;
+  height: 96rpx;
+  box-sizing: border-box;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 24rpx;
+  padding: 16rpx 32rpx calc(16rpx + env(safe-area-inset-bottom));
+  border-top: 1rpx solid #F2F2F2;
+  background: #FFFFFF;
+}
+
+.modal-footer button {
+  flex: 1;
+}
+
+.form-group:last-child {
+  margin-bottom: 8rpx;
+}
+
+.page-dark {
+  background: #111827;
+}
+
+.page-dark .date-nav,
+.page-dark .day-summary,
+.page-dark .record-item,
+.page-dark .modal-content,
+.page-dark .form-group,
+.page-dark .modal-footer,
+.page-dark .card {
+  background: #1f2937;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.page-dark .date-text,
+.page-dark .summary-val,
+.page-dark .summary-key,
+.page-dark .type-name,
+.page-dark .record-time-text,
+.page-dark .record-amount,
+.page-dark .record-duration,
+.page-dark .record-note-text,
+.page-dark .interval-text,
+.page-dark .form-label,
+.page-dark .form-input,
+.page-dark .form-textarea,
+.page-dark .time-picker,
+.page-dark .modal-title,
+.page-dark .text-gray,
+.page-dark .text-small {
+  color: #e5e7eb !important;
+}
+
+.page-dark .form-input,
+.page-dark .form-textarea,
+.page-dark .time-picker {
+  background: #111827;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
