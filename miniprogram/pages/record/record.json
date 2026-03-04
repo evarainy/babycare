@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "喂养记录",
+  "usingComponents": {
+    "voice-floating-button": "/components/voice-floating-button/index"
+  }
+}

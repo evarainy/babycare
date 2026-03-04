@@ -1,0 +1,13 @@
+{
+  "name": "llm-parser",
+  "version": "1.0.0",
+  "description": "LLM智能解析云函数 - 支持OpenAI协议",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  },
+  "cloudfunction-config": {
+    "memorySize": 256,
+    "timeout": 20
+  }
+}
