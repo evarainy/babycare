@@ -1,54 +1,64 @@
 <view class="page {{showModal ? 'page-lock' : ''}} {{darkMode ? 'page-dark' : ''}}">
-  <view class="date-nav">
-    <view class="nav-btn" bindtap="prevDay">‹</view>
+  <view class="date-nav card">
+    <view class="nav-action" bindtap="prevDay">前一天</view>
     <picker mode="date" value="{{currentDate}}" bindchange="onDateChange">
       <view class="date-text">{{currentDate}}</view>
     </picker>
-    <view class="nav-btn {{isToday ? 'disabled' : ''}}" bindtap="nextDay">›</view>
+    <view class="nav-action {{isToday ? 'disabled' : ''}}" bindtap="nextDay">后一天</view>
   </view>
 
   <view class="day-summary card">
-    <view class="summary-item">
-      <text class="summary-val">{{daySummary.count}}</text>
-      <text class="summary-key">次</text>
+    <view class="summary-heading">
+      <text class="section-kicker">当日概览</text>
+      <text class="section-copy">快速判断这一天的喂养节奏</text>
     </view>
-    <view class="summary-item">
-      <text class="summary-val">{{daySummary.totalAmount}}</text>
-      <text class="summary-key">ml</text>
-    </view>
-    <view class="summary-item">
-      <text class="summary-val">{{daySummary.avgInterval}}</text>
-      <text class="summary-key">平均间隔</text>
+    <view class="summary-grid">
+      <view class="summary-item">
+        <text class="summary-val">{{daySummary.count}}</text>
+        <text class="summary-key">喂养次数</text>
+      </view>
+      <view class="summary-item">
+        <text class="summary-val">{{daySummary.totalAmount}}</text>
+        <text class="summary-key">总奶量 ml</text>
+      </view>
+      <view class="summary-item">
+        <text class="summary-val">{{daySummary.avgInterval}}</text>
+        <text class="summary-key">平均间隔</text>
+      </view>
     </view>
   </view>
 
   <view class="records-list">
     <view wx:if="{{records.length === 0}}" class="empty-state">
-      <text>🍼</text>
       <text>当天暂无记录</text>
+      <text class="text-small text-gray">可以点击下方按钮手动补录</text>
     </view>
 
     <view class="record-item card" wx:for="{{records}}" wx:key="_id">
       <view class="record-header">
-        <view class="flex-row">
-          <text class="type-icon">{{item.typeIcon}}</text>
-          <view>
-            <text class="type-name">{{item.typeLabel}}</text>
-            <view class="tags">
-              <view class="tag tag-pink" wx:if="{{item.feedingType}}">{{item.feedingType}}</view>
-              <view class="tag tag-blue" wx:if="{{item.side}}">{{item.sideLabel}}</view>
-              <view class="tag tag-orange" wx:if="{{item.source === 'wechat_bot'}}">群聊</view>
-              <view class="tag tag-green" wx:if="{{item.source === 'siri'}}">Siri</view>
+        <view class="record-left">
+          <image class="type-icon-img" src="{{item.typeIconPath}}" mode="aspectFit" />
+          <view class="record-copy">
+            <view class="record-title-row">
+              <text class="type-name">{{item.typeLabel}}</text>
+              <view class="tags">
+                <view class="tag tag-pink" wx:if="{{item.feedingType}}">{{item.feedingType}}</view>
+                <view class="tag tag-pink" wx:if="{{item.itemName}}">{{item.itemName}}</view>
+                <view class="tag tag-blue" wx:if="{{item.side}}">{{item.sideLabel}}</view>
+                <view class="tag tag-blue" wx:if="{{item.unit && (item.type === 'supplement' || item.type === 'medicine')}}">{{item.unit}}</view>
+                <view class="tag tag-orange" wx:if="{{item.source === 'wechat_bot'}}">群聊</view>
+                <view class="tag tag-green" wx:if="{{item.source === 'siri'}}">Siri</view>
+              </view>
             </view>
+            <text class="record-time-text">{{item.timeText}}</text>
           </view>
         </view>
         <view class="record-right">
-          <text class="record-amount" wx:if="{{item.amount}}">{{item.amountText}}</text>
-          <text class="record-duration" wx:if="{{item.duration}}">{{item.duration}}min</text>
-          <text class="record-time-text">{{item.timeText}}</text>
+          <text class="record-amount" wx:if="{{item.amountText}}">{{item.amountText}}</text>
+          <text class="record-duration" wx:if="{{item.duration}}">{{item.duration}} 分钟</text>
         </view>
       </view>
-      <text class="record-note-text" wx:if="{{item.note}}">📝 {{item.note}}</text>
+      <text class="record-note-text" wx:if="{{item.note}}">备注：{{item.note}}</text>
       <view class="record-footer">
         <text class="interval-text" wx:if="{{item.intervalText}}">距上次 {{item.intervalText}}</text>
         <view class="record-ops">
@@ -60,7 +70,7 @@
   </view>
 
   <view class="add-btn-wrap">
-    <button class="add-btn" bindtap="showAddModal">+ 手动添加记录</button>
+    <button class="add-btn" bindtap="showAddModal">手动添加记录</button>
   </view>
 </view>
 
@@ -68,8 +78,11 @@
   <view class="modal-mask" bindtap="closeModal" catchtouchmove="noop"></view>
   <view class="modal-body" catchtouchmove="noop">
     <view class="modal-header">
-      <text class="modal-title">{{editId ? '编辑记录' : '添加记录'}}</text>
-      <text class="modal-close" bindtap="closeModal">✕</text>
+      <view>
+        <text class="modal-title">{{editId ? '编辑记录' : '添加记录'}}</text>
+        <text class="modal-copy">补齐核心信息后即可保存</text>
+      </view>
+      <text class="modal-close" bindtap="closeModal">×</text>
     </view>
 
     <scroll-view scroll-y class="modal-scroll" enhanced="true" show-scrollbar="false">
@@ -84,84 +97,103 @@
               bindtap="selectType"
               data-type="{{item.value}}"
             >
-              <text>{{item.icon}}</text>
-              <text>{{item.label}}</text>
+              <image class="type-option-icon" src="{{item.icon}}" mode="aspectFit" />
+              <text class="type-option-label">{{item.label}}</text>
             </view>
           </view>
         </scroll-view>
       </view>
 
       <view class="form-group" wx:if="{{form.type === 'breastfeeding'}}">
-        <text class="form-label">喂养侧</text>
+        <text class="form-label">亲喂侧别</text>
         <view class="option-row">
-          <view
-            class="option-btn {{form.side === item.value ? 'active' : ''}}"
-            wx:for="{{sideOptions}}"
-            wx:key="value"
-            bindtap="selectSide"
-            data-side="{{item.value}}"
-          >{{item.label}}</view>
+          <view class="option-btn {{form.side === item.value ? 'active' : ''}}" wx:for="{{sideOptions}}" wx:key="value" bindtap="selectSide" data-side="{{item.value}}">{{item.label}}</view>
         </view>
       </view>
 
       <view class="form-group" wx:if="{{form.type === 'breastfeeding'}}">
-        <text class="form-label">时长 (分钟)</text>
+        <text class="form-label">时长（分钟）</text>
         <view class="amount-presets">
-          <view
-            class="preset-btn {{form.duration == item ? 'active' : ''}}"
-            wx:for="{{[5, 10, 15, 20, 30]}}"
-            wx:key="*this"
-            bindtap="selectPresetDuration"
-            data-duration="{{item}}"
-          >{{item}}</view>
+          <view class="preset-btn {{form.duration == item ? 'active' : ''}}" wx:for="{{[5, 10, 15, 20, 30]}}" wx:key="*this" bindtap="selectPresetDuration" data-duration="{{item}}">{{item}}</view>
         </view>
-        <view class="form-input-wrap"><input class="form-input" type="number" placeholder="自定义时长" value="{{form.duration}}" bindinput="onDurationChange" /></view>
+        <view class="form-input-wrap">
+          <input class="form-input" type="number" placeholder="输入时长" value="{{form.duration}}" bindinput="onDurationChange" />
+        </view>
       </view>
 
       <view class="form-group" wx:if="{{form.type === 'bottle'}}">
         <text class="form-label">瓶喂类型</text>
         <view class="option-row">
-          <view
-            class="option-btn {{form.feedingType === item ? 'active' : ''}}"
-            wx:for="{{bottleTypeOptions}}"
-            wx:key="*this"
-            bindtap="selectFeedingType"
-            data-type="{{item}}"
-          >{{item}}</view>
+          <view class="option-btn {{form.feedingType === item ? 'active' : ''}}" wx:for="{{bottleTypeOptions}}" wx:key="*this" bindtap="selectFeedingType" data-type="{{item}}">{{item}}</view>
         </view>
       </view>
 
       <view class="form-group" wx:if="{{form.type === 'bottle'}}">
-        <text class="form-label">奶量 (ml)</text>
+        <text class="form-label">奶量（ml）</text>
         <view class="amount-presets">
-          <view
-            class="preset-btn {{form.amount == item ? 'active' : ''}}"
-            wx:for="{{[60, 80, 100, 120, 150, 180, 200]}}"
-            wx:key="*this"
-            bindtap="selectPresetAmount"
-            data-amount="{{item}}"
-          >{{item}}</view>
+          <view class="preset-btn {{form.amount == item ? 'active' : ''}}" wx:for="{{[60, 80, 100, 120, 150, 180, 200]}}" wx:key="*this" bindtap="selectPresetAmount" data-amount="{{item}}">{{item}}</view>
         </view>
-        <view class="form-input-wrap"><input class="form-input" type="number" placeholder="自定义奶量" value="{{form.amount}}" bindinput="onAmountChange" /></view>
+        <view class="form-input-wrap">
+          <input class="form-input" type="number" placeholder="输入奶量" value="{{form.amount}}" bindinput="onAmountChange" />
+        </view>
       </view>
 
       <view class="form-group" wx:if="{{form.type === 'food'}}">
-        <text class="form-label">辅食量 (g)</text>
+        <text class="form-label">辅食重量（g）</text>
         <view class="amount-presets">
-          <view
-            class="preset-btn {{form.amount == item ? 'active' : ''}}"
-            wx:for="{{[10, 20, 30, 50, 80]}}"
-            wx:key="*this"
-            bindtap="selectPresetAmount"
-            data-amount="{{item}}"
-          >{{item}}</view>
+          <view class="preset-btn {{form.amount == item ? 'active' : ''}}" wx:for="{{[10, 20, 30, 50, 80]}}" wx:key="*this" bindtap="selectPresetAmount" data-amount="{{item}}">{{item}}</view>
         </view>
-        <view class="form-input-wrap"><input class="form-input" type="number" placeholder="自定义克数" value="{{form.amount}}" bindinput="onAmountChange" /></view>
+        <view class="form-input-wrap">
+          <input class="form-input" type="number" placeholder="输入克数" value="{{form.amount}}" bindinput="onAmountChange" />
+        </view>
+      </view>
+
+      <view class="form-group" wx:if="{{form.type === 'supplement'}}">
+        <text class="form-label">补剂名称</text>
+        <view class="option-row">
+          <view class="option-btn {{form.itemName === item ? 'active' : ''}}" wx:for="{{supplementNameOptions}}" wx:key="*this" bindtap="selectItemName" data-name="{{item}}">{{item}}</view>
+        </view>
+      </view>
+
+      <view class="form-group" wx:if="{{form.type === 'supplement'}}">
+        <text class="form-label">单位与用量</text>
+        <view class="option-row">
+          <view class="option-btn {{form.unit === item ? 'active' : ''}}" wx:for="{{supplementUnitOptions}}" wx:key="*this" bindtap="selectUnit" data-unit="{{item}}">{{item}}</view>
+        </view>
+        <view class="form-input-wrap">
+          <input class="form-input" type="digit" placeholder="输入用量" value="{{form.amount}}" bindinput="onAmountChange" />
+        </view>
+      </view>
+
+      <view class="form-group" wx:if="{{form.type === 'medicine'}}">
+        <text class="form-label">药物名称</text>
+        <view class="form-input-wrap">
+          <input class="form-input" placeholder="输入药物名称" value="{{form.itemName}}" bindinput="onItemNameChange" />
+        </view>
+      </view>
+
+      <view class="form-group" wx:if="{{form.type === 'medicine'}}">
+        <text class="form-label">单位与用量</text>
+        <view class="option-row">
+          <view class="option-btn {{form.unit === item ? 'active' : ''}}" wx:for="{{medicineUnitOptions}}" wx:key="*this" bindtap="selectUnit" data-unit="{{item}}">{{item}}</view>
+        </view>
+        <view class="form-input-wrap">
+          <input class="form-input" type="digit" placeholder="输入用量" value="{{form.amount}}" bindinput="onAmountChange" />
+        </view>
+      </view>
+
+      <view class="form-group" wx:if="{{form.type === 'outdoor'}}">
+        <text class="form-label">户外事件</text>
+        <view class="form-input-wrap">
+          <input class="form-input" placeholder="例如 晒太阳 / 公园散步 / 小区遛弯" value="{{form.itemName}}" bindinput="onItemNameChange" />
+        </view>
       </view>
 
       <view class="form-group" wx:if="{{form.type === 'swimming' || form.type === 'sleep'}}">
-        <text class="form-label">时长 (分钟)</text>
-        <view class="form-input-wrap"><input class="form-input" type="number" placeholder="输入时长" value="{{form.duration}}" bindinput="onDurationChange" /></view>
+        <text class="form-label">时长（分钟）</text>
+        <view class="form-input-wrap">
+          <input class="form-input" type="number" placeholder="输入时长" value="{{form.duration}}" bindinput="onDurationChange" />
+        </view>
       </view>
 
       <view class="form-group">

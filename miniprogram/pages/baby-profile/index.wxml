@@ -1,0 +1,61 @@
+<view class="page {{darkMode ? 'page-dark' : ''}}">
+  <view class="container profile-page">
+    <view wx:if="{{loading}}" class="card loading-card">
+      <text class="loading-text">正在加载宝宝信息...</text>
+    </view>
+
+    <block wx:else>
+      <view class="card profile-hero">
+        <view class="avatar-wrap" bindtap="choosePhoto">
+          <image class="profile-avatar" src="{{photoUrl}}" mode="aspectFill" />
+          <view class="avatar-edit">{{uploading ? '上传中' : '更换头像'}}</view>
+        </view>
+        <view class="profile-copy">
+          <text class="profile-kicker">{{isNew ? '首次使用' : '宝宝档案'}}</text>
+          <text class="profile-title">{{isNew ? '先创建宝宝信息，我们就能把首页数据和报表绑定起来。' : '可以在这里查看并修改当前绑定的宝宝信息。'}}</text>
+        </view>
+      </view>
+
+      <view class="card form-card">
+        <view class="form-item">
+          <text class="form-label">宝宝姓名</text>
+          <input class="form-input" value="{{form.name}}" data-field="name" placeholder="请输入宝宝姓名" bindinput="onFieldChange" />
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">出生日期</text>
+          <picker mode="date" value="{{form.birthday}}" bindchange="onBirthdayChange">
+            <view class="picker-input {{form.birthday ? '' : 'placeholder'}}">{{form.birthday || '请选择出生日期'}}</view>
+          </picker>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">性别</text>
+          <view class="gender-row">
+            <view class="gender-pill {{form.gender === 'boy' ? 'active' : ''}}" data-gender="boy" bindtap="selectGender">男宝宝</view>
+            <view class="gender-pill {{form.gender === 'girl' ? 'active' : ''}}" data-gender="girl" bindtap="selectGender">女宝宝</view>
+            <view class="gender-pill {{form.gender === 'unknown' ? 'active' : ''}}" data-gender="unknown" bindtap="selectGender">暂不设置</view>
+          </view>
+        </view>
+
+        <view class="form-grid">
+          <view class="form-item half">
+            <text class="form-label">身高(cm)</text>
+            <input class="form-input" type="digit" value="{{form.heightCm}}" data-field="heightCm" placeholder="例如 66" bindinput="onFieldChange" />
+          </view>
+          <view class="form-item half">
+            <text class="form-label">体重(g)</text>
+            <input class="form-input" type="digit" value="{{form.weightG}}" data-field="weightG" placeholder="例如 7200" bindinput="onFieldChange" />
+          </view>
+        </view>
+
+        <view class="form-item">
+          <text class="form-label">备注</text>
+          <textarea class="form-textarea" value="{{form.note}}" data-field="note" placeholder="例如：过敏、喂养习惯、需要关注的情况" maxlength="200" bindinput="onFieldChange" />
+        </view>
+
+        <button class="btn-primary submit-btn" loading="{{saving}}" bindtap="submitProfile">{{isNew ? '创建宝宝档案' : '保存修改'}}</button>
+      </view>
+    </block>
+  </view>
+</view>

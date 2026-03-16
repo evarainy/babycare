@@ -44,29 +44,40 @@ Page({
 
   async loadReport() {
     const { period } = this.data
-    const days = parseInt(period)
+    const days = this.parsePeriodDays(period)
     const endDate = this.getDateStr(new Date())
     const startDate = this.getDateStr(new Date(Date.now() - (days - 1) * 86400000))
 
     try {
       const res = await callApi('getReport', { startDate, endDate })
-      const report = res.data
+      const report = res.data || { days: [], summary: {} }
+      const normalizedDays = Array.isArray(report.days) ? report.days : []
 
-      const maxAmount = Math.max(...report.days.map(d => d.totalAmount), 1)
-      const chartData = report.days.map(d => ({
+      const maxAmount = Math.max(...normalizedDays.map(d => Number(d.totalAmount) || 0), 1)
+      const chartData = normalizedDays.map(d => ({
         ...d,
         dateLabel: d.date.slice(5),
         heightPercent: Math.round((d.totalAmount / maxAmount) * 100),
         amountPercent: Math.round((d.totalAmount / maxAmount) * 100)
       }))
 
-      const avgIntervalText = formatInterval(report.summary.avgIntervalMinutes)
-      const insights = this.generateInsights(report)
+      const normalizedReport = {
+        ...report,
+        days: chartData
+      }
 
-      this.setData({ report, chartData, avgIntervalText, insights })
+      const avgIntervalText = formatInterval(report.summary.avgIntervalMinutes)
+      const insights = this.generateInsights(normalizedReport)
+
+      this.setData({ report: normalizedReport, chartData, avgIntervalText, insights })
     } catch (err) {
       console.error('加载报表失败:', err)
     }
+  },
+
+  parsePeriodDays(period) {
+    const parsed = parseInt(period, 10)
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 7
   },
 
   generateInsights(report) {
@@ -75,7 +86,7 @@ Page({
 
     if (summary.avgDailyCount > 0) {
       insights.push({
-        icon: '🍼',
+        iconPath: '/assets/icons/report-average.svg',
         text: `平均每天喂养 ${summary.avgDailyCount} 次，总奶量 ${summary.avgDailyAmount}ml`
       })
     }
@@ -85,7 +96,7 @@ Page({
       const m = summary.avgIntervalMinutes % 60
       const intervalStr = h > 0 ? `${h}小时${m}分钟` : `${m}分钟`
       insights.push({
-        icon: '⏰',
+        iconPath: '/assets/icons/report-interval.svg',
         text: `平均喂养间隔 ${intervalStr}`
       })
     }
@@ -96,15 +107,15 @@ Page({
       const recentAvg = recentDays.reduce((s, d) => s + d.totalAmount, 0) / recentDays.length
       const olderAvg = olderDays.reduce((s, d) => s + d.totalAmount, 0) / olderDays.length
       if (recentAvg > olderAvg * 1.1) {
-        insights.push({ icon: '📈', text: '近3天奶量有所增加，宝宝胃口不错！' })
+        insights.push({ iconPath: '/assets/icons/report-rise.svg', text: '近3天奶量有所增加，宝宝胃口不错。' })
       } else if (recentAvg < olderAvg * 0.9) {
-        insights.push({ icon: '📉', text: '近3天奶量略有减少，注意观察宝宝状态' })
+        insights.push({ iconPath: '/assets/icons/report-fall.svg', text: '近3天奶量略有减少，建议关注宝宝状态。' })
       }
     }
 
     const zerodays = days.filter(d => d.count === 0).length
     if (zerodays > 0) {
-      insights.push({ icon: '⚠️', text: `有 ${zerodays} 天记录为空，可能有漏记` })
+      insights.push({ iconPath: '/assets/icons/report-alert.svg', text: `有 ${zerodays} 天记录为空，可能存在漏记。` })
     }
 
     return insights

@@ -3,6 +3,15 @@ const { callApi, parseFeedingText } = require('../../utils/api')
 const CANCEL_THRESHOLD = 50
 const MAX_DURATION_MS = 60000
 const MIN_DURATION_MS = 1000
+const DEFAULT_HINT = '松开发送，向上滑动取消'
+const CANCEL_HINT = '松开取消，返回可继续录音'
+
+const getAmountText = (record) => {
+  if (record.amount !== 0 && !record.amount) return ''
+  if (record.type === 'food') return `${record.amount}g`
+  if (record.type === 'supplement' || record.type === 'medicine') return `${record.amount}${record.unit || ''}`
+  return `${record.amount}ml`
+}
 
 Component({
   properties: {},
@@ -10,7 +19,7 @@ Component({
   data: {
     isRecording: false,
     isCancelMode: false,
-    hintText: '松开手指，发送',
+    hintText: DEFAULT_HINT,
     levelBars: [20, 34, 26, 40, 30]
   },
 
@@ -30,7 +39,7 @@ Component({
         this.manager = manager
         this.bindRecognitionHandlers()
       } catch (err) {
-        console.warn('WechatSI插件不可用:', err)
+        console.warn('WechatSI 插件不可用', err)
         this.manager = null
       }
     },
@@ -44,18 +53,16 @@ Component({
       }
       this.manager.onStop = async (res) => {
         const duration = Date.now() - (this.recordStartTime || Date.now())
-        const shouldCancel = this.cancelOnStop
-        if (shouldCancel) {
+        if (this.cancelOnStop) {
           wx.showToast({ title: '已取消', icon: 'none' })
           return
         }
-
         if (duration < MIN_DURATION_MS) {
-          wx.showToast({ title: '识别失败，请重试', icon: 'none' })
+          wx.showToast({ title: '录音时间太短', icon: 'none' })
           return
         }
 
-        const text = (res && res.result) ? String(res.result).trim() : ''
+        const text = res && res.result ? String(res.result).trim() : ''
         if (!text) {
           wx.showToast({ title: '识别失败，请重试', icon: 'none' })
           return
@@ -74,6 +81,7 @@ Component({
               resolve(true)
               return
             }
+
             wx.authorize({
               scope: 'scope.record',
               success: () => resolve(true),
@@ -83,14 +91,14 @@ Component({
                   content: '请在设置中开启麦克风权限后继续语音录入。',
                   confirmText: '去设置',
                   success: (res) => {
-                    if (res.confirm) {
-                      wx.openSetting({
-                        success: (openRes) => resolve(!!openRes.authSetting['scope.record']),
-                        fail: () => resolve(false)
-                      })
-                    } else {
+                    if (!res.confirm) {
                       resolve(false)
+                      return
                     }
+                    wx.openSetting({
+                      success: (openRes) => resolve(!!openRes.authSetting['scope.record']),
+                      fail: () => resolve(false)
+                    })
                   }
                 })
               }
@@ -104,7 +112,7 @@ Component({
     async onTouchStart(e) {
       if (this.data.isRecording) return
       if (!this.manager) {
-        wx.showToast({ title: '识别失败，请重试', icon: 'none' })
+        wx.showToast({ title: '识别服务不可用', icon: 'none' })
         return
       }
 
@@ -121,7 +129,7 @@ Component({
       this.setData({
         isRecording: true,
         isCancelMode: false,
-        hintText: '松开手指，发送'
+        hintText: DEFAULT_HINT
       })
 
       this.manager.start({
@@ -131,9 +139,7 @@ Component({
 
       this.barTimer = setInterval(() => this.animateBars(), 180)
       this.autoStopTimer = setTimeout(() => {
-        if (this.data.isRecording) {
-          this.finalizeStop(false)
-        }
+        if (this.data.isRecording) this.finalizeStop(false)
       }, MAX_DURATION_MS)
     },
 
@@ -141,12 +147,13 @@ Component({
       if (!this.data.isRecording) return
       const touch = e.touches && e.touches[0]
       if (!touch) return
+
       const moveDelta = this.startY - touch.clientY
-      const toCancelMode = moveDelta > CANCEL_THRESHOLD
-      if (toCancelMode !== this.data.isCancelMode) {
+      const isCancelMode = moveDelta > CANCEL_THRESHOLD
+      if (isCancelMode !== this.data.isCancelMode) {
         this.setData({
-          isCancelMode: toCancelMode,
-          hintText: toCancelMode ? '松开手指，取消发送' : '松开手指，发送'
+          isCancelMode,
+          hintText: isCancelMode ? CANCEL_HINT : DEFAULT_HINT
         })
       }
     },
@@ -171,7 +178,11 @@ Component({
     },
 
     stopRecordUI() {
-      this.setData({ isRecording: false, isCancelMode: false, hintText: '松开手指，发送' })
+      this.setData({
+        isRecording: false,
+        isCancelMode: false,
+        hintText: DEFAULT_HINT
+      })
       clearInterval(this.barTimer)
       clearTimeout(this.autoStopTimer)
       this.barTimer = null
@@ -205,8 +216,9 @@ Component({
         const summary = parsed.map((record) => {
           const parts = [
             record.type || '记录',
+            record.itemName || '',
             record.feedingType || '',
-            (record.amount || record.amount === 0) ? `${record.amount}${record.type === 'food' ? 'g' : 'ml'}` : '',
+            getAmountText(record),
             record.duration ? `${record.duration}分钟` : '',
             record.side || '',
             record.recordTime || ''
@@ -238,7 +250,9 @@ Component({
         const tasks = parsed.map((record) => callApi('addRecord', {
           record: {
             type: record.type,
+            itemName: record.itemName,
             amount: record.amount,
+            unit: record.unit,
             side: record.side,
             feedingType: record.feedingType,
             duration: record.duration,
@@ -252,7 +266,7 @@ Component({
         wx.showToast({ title: '已记录', icon: 'none' })
         this.triggerEvent('recordsuccess')
       } catch (err) {
-        wx.showToast({ title: '识别失败，请重试', icon: 'none' })
+        wx.showToast({ title: '保存失败，请重试', icon: 'none' })
       }
     }
   }

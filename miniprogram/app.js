@@ -10,8 +10,19 @@ App({
     darkMode: false
   },
 
+  applyTabBarStyle(darkMode = false) {
+    if (!wx.setTabBarStyle) return
+    wx.setTabBarStyle({
+      color: darkMode ? '#7E8A9D' : '#94A0B2',
+      selectedColor: darkMode ? '#FFB6C9' : '#FF6B95',
+      backgroundColor: darkMode ? '#121A26' : '#FFFFFF',
+      borderStyle: darkMode ? 'black' : 'white'
+    })
+  },
+
   onLaunch(options) {
     this.globalData.darkMode = !!wx.getStorageSync('darkMode')
+    this.applyTabBarStyle(this.globalData.darkMode)
     this.globalData.cloudEnv = this.resolveCloudEnv()
 
     const initOptions = {
@@ -47,6 +58,7 @@ App({
 
   onShow(options) {
     this.captureInviteCode(options)
+    this.applyTabBarStyle(this.globalData.darkMode)
     if (this.globalData.userInfo) {
       this.tryJoinFamilyByInvite()
     }

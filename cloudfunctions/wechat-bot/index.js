@@ -13,6 +13,12 @@ const KEYWORDS = [
   '记录', 'ml', '毫升', '分钟', '左边', '右边', '左侧', '右侧'
 ]
 
+KEYWORDS.push(
+  '户外', '外出', '出去玩', '晒太阳', '散步', '公园', '遛弯', '草地', '广场', '小区玩',
+  '补剂', '维生素D', '维D', 'D3', 'AD', '乳铁蛋白', '益生菌',
+  '药物', '喂药', '吃药', '用药', '退烧药', '感冒药', '布洛芬', '美林', '头孢', '阿莫西林', '药水'
+)
+
 exports.main = async (event) => {
   const { httpMethod, body, queryStringParameters } = event
 
@@ -45,7 +51,11 @@ async function handleMessage(body) {
     const content = (text.content || '').trim()
     const hasBotMention = content.includes('@宝宝小助手') || content.includes('@喂养助手')
     const isMentioned = Array.isArray(mentioned_list) && mentioned_list.includes('@all')
-    const hasKeyword = KEYWORDS.some((kw) => content.includes(kw))
+    const normalizedContent = content.toLowerCase()
+    const hasKeyword = KEYWORDS.some((kw) => {
+      const normalizedKeyword = String(kw).toLowerCase()
+      return content.includes(kw) || normalizedContent.includes(normalizedKeyword)
+    })
 
     if (!hasBotMention && !isMentioned && !hasKeyword) {
       return { statusCode: 200, body: 'ok' }
@@ -96,6 +106,8 @@ async function handleMessage(body) {
         amount: toNullable(parsed.amount),
         side: toNullable(parsed.side),
         feedingType: toNullable(parsed.feedingType),
+        itemName: toNullable(parsed.itemName),
+        unit: toNullable(parsed.unit),
         duration: toNullable(parsed.duration),
         note: parsed.note || '',
         recordTime: parseRecordTime(parsed.recordTime),
@@ -148,11 +160,16 @@ function fallbackParse(text) {
   if (!segments.length) return []
 
   return segments.map((segment) => {
+    const outdoorKeywords = ['户外', '外出', '出去玩', '晒太阳', '散步', '公园', '遛弯', '草地', '广场', '小区玩']
+    const supplementKeywords = ['补剂', '维生素D', '维D', 'VD', 'D3', 'AD', '乳铁蛋白', '益生菌']
+    const medicineKeywords = ['喂药', '吃药', '药物', '布洛芬', '美林', '头孢', '阿莫西林', '蒙脱石散', '退烧药']
     const result = {
       type: 'bottle',
       amount: null,
       side: null,
       feedingType: null,
+      itemName: null,
+      unit: null,
       duration: null,
       note: segment,
       recordTime: inferTimeFromText(segment),
@@ -163,6 +180,7 @@ function fallbackParse(text) {
     const amountMatch = segment.match(/(\d+(?:\.\d+)?)\s*(?:ml|毫升|ML|g|克)?/)
     if (amountMatch) {
       result.amount = parseFloat(amountMatch[1])
+      result.unit = amountMatch[0].replace(amountMatch[1], '').trim() || null
       if (/[g克]/.test(segment)) result.type = 'food'
     }
 
@@ -198,6 +216,32 @@ function fallbackParse(text) {
       if (durationMatch) result.duration = parseInt(durationMatch[1], 10)
       result.amount = null
       result.feedingType = null
+    } else if (supplementKeywords.some((keyword) => segment.toLowerCase().includes(keyword.toLowerCase()))) {
+      result.type = 'supplement'
+      result.itemName = supplementKeywords.find((keyword) => segment.toLowerCase().includes(keyword.toLowerCase())) || '补剂'
+      result.duration = null
+      result.feedingType = null
+      result.side = null
+      result.confidence = 0.9
+      result.needConfirm = false
+    } else if (medicineKeywords.some((keyword) => segment.includes(keyword))) {
+      result.type = 'medicine'
+      result.itemName = medicineKeywords.find((keyword) => segment.includes(keyword) && keyword.length > 1) || '药物'
+      result.duration = null
+      result.feedingType = null
+      result.side = null
+      result.confidence = 0.9
+      result.needConfirm = false
+    } else if (outdoorKeywords.some((keyword) => segment.includes(keyword))) {
+      result.type = 'outdoor'
+      result.itemName = outdoorKeywords.find((keyword) => segment.includes(keyword)) || '户外'
+      result.amount = null
+      result.unit = null
+      result.duration = null
+      result.feedingType = null
+      result.side = null
+      result.confidence = 0.9
+      result.needConfirm = false
     } else if (!result.amount && !result.feedingType) {
       result.type = 'other'
     }
@@ -292,12 +336,15 @@ async function handleBindCommand(chatid, bindCode, sender) {
   }
 
   await usersCollection.doc(user._id).update({
-    data: { botBindCode: null, botBindCodeExpire: null, updateTime: new Date() }
+    data: { botBindCode: generateInactiveBindCode(), botBindCodeExpire: new Date(0), updateTime: new Date() }
   })
 
   return `✅ 绑定成功\n\n🍼 此群已与宝宝账号绑定\n👤 绑定人：${sender || '未知'}\n📝 现在可以直接发送记录了\n\n发送“帮助”查看使用方法。`
 }
 
+function generateInactiveBindCode() {
+  return `USED_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+}
 function isQueryRequest(text) {
   const queryWords = ['今天', '今日', '查看', '报表', '统计', '喝了多少', '喂了几次', '总量']
   return queryWords.some((word) => text.includes(word))
@@ -347,9 +394,10 @@ async function getTodaySummaryForBot(chatid) {
   const recentLines = milkRecords.slice(0, 3).map((r) => {
     const time = dayjs(r.recordTime).format('HH:mm')
     const details = []
+    if (r.itemName) details.push(r.itemName)
     if (r.feedingType) details.push(r.feedingType)
     if (r.side) details.push(`${r.side}侧`)
-    if (r.amount) details.push(`${r.amount}ml`)
+    if (r.amount) details.push(`${r.amount}${r.unit || 'ml'}`)
     if (r.duration) details.push(`${r.duration}分钟`)
     return `• ${time} ${details.join(' ')}`.trim()
   }).join('\n')
@@ -404,6 +452,10 @@ function buildReplyMessage(records) {
     sleep: '睡眠',
     other: '其他'
   }
+
+  typeMap.supplement = '补剂'
+  typeMap.medicine = '药物'
+  typeMap.outdoor = '户外'
 
   const first = records[0]
   const firstType = typeMap[first.type] || '记录'

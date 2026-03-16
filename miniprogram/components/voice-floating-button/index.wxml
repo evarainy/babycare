@@ -17,11 +17,11 @@
   >
     <view class="pulse-ring ring-a" wx:if="{{isRecording}}"></view>
     <view class="pulse-ring ring-b" wx:if="{{isRecording}}"></view>
-
     <view class="voice-overlay"></view>
+    <view class="voice-glass"></view>
 
     <view class="voice-icon" wx:if="{{!isCancelMode}}">
-      <text class="mic-symbol">🎤</text>
+      <image class="voice-icon-image" src="/assets/icons/voice-mic-glass.svg" mode="aspectFit" />
     </view>
 
     <view class="voice-icon icon-close" wx:else>

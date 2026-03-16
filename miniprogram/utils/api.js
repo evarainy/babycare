@@ -58,6 +58,9 @@ const getTypeLabel = (type) => {
     breastfeeding: '亲喂',
     bottle: '瓶喂',
     food: '辅食',
+    supplement: '补剂',
+    medicine: '药物',
+    outdoor: '户外',
     swimming: '游泳',
     diaper: '换尿布',
     sleep: '睡眠',
@@ -68,30 +71,49 @@ const getTypeLabel = (type) => {
 
 const getTypeIcon = (type) => {
   const map = {
-    breastfeeding: '🤱',
-    bottle: '🍼',
-    food: '🥣',
-    swimming: '🏊',
-    diaper: '👶',
-    sleep: '😴',
-    other: '📝'
+    breastfeeding: '亲',
+    bottle: '瓶',
+    food: '辅',
+    supplement: '补',
+    medicine: '药',
+    outdoor: '户',
+    swimming: '泳',
+    diaper: '尿',
+    sleep: '睡',
+    other: '记'
   }
-  return map[type] || '📝'
+  return map[type] || '记'
+}
+
+const getTypeIconPath = (type) => {
+  const map = {
+    breastfeeding: '/assets/icons/type-breastfeeding.svg',
+    bottle: '/assets/icons/type-bottle.svg',
+    food: '/assets/icons/type-food.svg',
+    supplement: '/assets/icons/type-supplement.svg',
+    medicine: '/assets/icons/type-medicine.svg',
+    outdoor: '/assets/icons/type-outdoor.svg',
+    swimming: '/assets/icons/type-swimming.svg',
+    diaper: '/assets/icons/type-diaper.svg',
+    sleep: '/assets/icons/type-sleep.svg',
+    other: '/assets/icons/type-other.svg'
+  }
+  return map[type] || '/assets/icons/type-other.svg'
 }
 
 const formatAmount = (amount, type) => {
   if (!amount && amount !== 0) return ''
   if (type === 'food') return `${amount}g`
-  if (amount >= 1000) return `${(amount / 1000).toFixed(1)}L`
+  if (type === 'supplement' || type === 'medicine') return `${amount}`
   return `${amount}ml`
 }
 
 const getSideLabel = (side) => {
   const map = {
-    '左': '左侧',
-    '右': '右侧',
-    '双': '双侧',
-    '瓶喂': '瓶喂'
+    left: '左侧',
+    right: '右侧',
+    both: '双侧',
+    bottle: '瓶喂'
   }
   return map[side] || side || ''
 }
@@ -104,6 +126,7 @@ module.exports = {
   formatInterval,
   getTypeLabel,
   getTypeIcon,
+  getTypeIconPath,
   getSideLabel,
   formatAmount
 }

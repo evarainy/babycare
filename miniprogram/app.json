@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/index/index",
+    "pages/baby-profile/index",
     "pages/record/record",
     "pages/report/report",
     "pages/settings/settings"

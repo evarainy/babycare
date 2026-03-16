@@ -70,7 +70,9 @@ async function addRecord(event, openid) {
     openid,
     babyId: currentBabyId || '',
     type: record.type || 'bottle',
+    itemName: toNullable(record.itemName),
     amount: toNullable(record.amount),
+    unit: toNullable(record.unit),
     side: toNullable(record.side),
     feedingType: toNullable(record.feedingType),
     duration: toNullable(record.duration),
@@ -127,6 +129,13 @@ async function updateRecord(event, openid) {
     status: 'confirmed'
   }
 
+  if ('itemName' in updateData) updateData.itemName = toNullable(updateData.itemName)
+  if ('unit' in updateData) updateData.unit = toNullable(updateData.unit)
+  if ('amount' in updateData) updateData.amount = toNullable(updateData.amount)
+  if ('side' in updateData) updateData.side = toNullable(updateData.side)
+  if ('feedingType' in updateData) updateData.feedingType = toNullable(updateData.feedingType)
+  if ('duration' in updateData) updateData.duration = toNullable(updateData.duration)
+
   if (updateData.recordTime !== undefined && updateData.recordTime !== null && updateData.recordTime !== '') {
     const normalized = new Date(updateData.recordTime)
     if (!Number.isNaN(normalized.getTime())) {
@@ -165,8 +174,17 @@ async function getReport(event, openid) {
   const familyId = await getFamilyId(openid)
   const { currentBabyId } = await getCurrentBaby(openid)
 
-  const { start } = getChinaDayRange(startDate)
-  const { end } = getChinaDayRange(endDate)
+  const normalizedStartDate = startDate || formatChinaDateKey(new Date())
+  const normalizedEndDate = endDate || normalizedStartDate
+  const rangeStart = dayjs(normalizedStartDate)
+  const rangeEnd = dayjs(normalizedEndDate)
+  const safeStartDate = rangeStart.isValid() ? rangeStart.format('YYYY-MM-DD') : formatChinaDateKey(new Date())
+  const safeEndDate = rangeEnd.isValid() ? rangeEnd.format('YYYY-MM-DD') : safeStartDate
+  const finalStartDate = dayjs(safeStartDate).isAfter(dayjs(safeEndDate)) ? safeEndDate : safeStartDate
+  const finalEndDate = dayjs(safeStartDate).isAfter(dayjs(safeEndDate)) ? safeStartDate : safeEndDate
+
+  const { start } = getChinaDayRange(finalStartDate)
+  const { end } = getChinaDayRange(finalEndDate)
 
   const result = await recordsCollection
     .where({
@@ -178,7 +196,7 @@ async function getReport(event, openid) {
     .get()
 
   const records = (result.data || []).filter(r => isRecordMatchCurrentBaby(r, currentBabyId))
-  const report = generateReport(records, type, startDate, endDate)
+  const report = generateReport(records, type, finalStartDate, finalEndDate)
 
   return { code: 0, data: report }
 }
@@ -199,7 +217,8 @@ async function getTodaySummary(event, openid) {
 
   const records = (result.data || []).filter(r => isRecordMatchCurrentBaby(r, currentBabyId))
   const feedingRecords = records.filter(r => r.type === 'breastfeeding' || r.type === 'bottle')
-  const totalAmount = feedingRecords.reduce((sum, r) => sum + (r.amount || 0), 0)
+  const milkRecords = feedingRecords.filter((r) => r.type === 'breastfeeding' || r.feedingType !== '水')
+  const totalAmount = milkRecords.reduce((sum, r) => sum + (r.amount || 0), 0)
   const lastRecord = feedingRecords[0] || null
 
   const formulaAmount = feedingRecords
@@ -207,6 +226,9 @@ async function getTodaySummary(event, openid) {
     .reduce((sum, r) => sum + (r.amount || 0), 0)
   const breastMilkAmount = feedingRecords
     .filter(r => r.feedingType === '母乳')
+    .reduce((sum, r) => sum + (r.amount || 0), 0)
+  const waterAmount = feedingRecords
+    .filter((r) => r.feedingType === '水')
     .reduce((sum, r) => sum + (r.amount || 0), 0)
 
   const foodRecords = records.filter(r => r.type === 'food')
@@ -224,6 +246,7 @@ async function getTodaySummary(event, openid) {
       totalAmount,
       formulaAmount,
       breastMilkAmount,
+      waterAmount,
       foodAmount,
       foodCount: foodRecords.length,
       lastRecord,
@@ -231,6 +254,68 @@ async function getTodaySummary(event, openid) {
       allRecords: records,
       currentBaby
     }
+  }
+}
+
+function isPlaceholderBaby(baby) {
+  if (!baby) return false
+  const name = String(baby.name || '').trim()
+  return name === '未设置宝宝'
+    && !baby.birthday
+    && (baby.weightG === null || baby.weightG === undefined || baby.weightG === '')
+    && (baby.heightCm === null || baby.heightCm === undefined || baby.heightCm === '')
+    && !baby.photoUrl
+}
+
+async function cleanupPlaceholderBabies(familyId, babies = []) {
+  const placeholders = babies.filter((b) => b && b._id && isPlaceholderBaby(b))
+  if (!placeholders.length) return babies
+
+  const placeholderIds = placeholders.map((b) => b._id)
+  const recordsRes = await recordsCollection
+    .where({
+      familyId,
+      babyId: _.in(placeholderIds),
+      status: _.neq('deleted')
+    })
+    .get()
+
+  const referencedIds = new Set((recordsRes.data || []).map((r) => r.babyId).filter(Boolean))
+  const removable = placeholders.filter((b) => !referencedIds.has(b._id))
+  if (!removable.length) return babies
+
+  await Promise.all(removable.map((b) => babiesCollection.doc(b._id).update({
+    data: { status: 'deleted', updateTime: new Date() }
+  })))
+
+  const removableIds = new Set(removable.map((b) => b._id))
+  return babies.filter((b) => !removableIds.has(b._id))
+}
+
+function resolvePreferredCurrentBabyId(babies = [], currentBabyId = '') {
+  if (!babies.length) return ''
+
+  const currentBaby = babies.find((b) => b._id === currentBabyId) || null
+  const realBabies = babies.filter((b) => !isPlaceholderBaby(b))
+
+  if (currentBaby && !(realBabies.length && isPlaceholderBaby(currentBaby))) {
+    return currentBabyId
+  }
+
+  return (realBabies[0] || babies[0])._id || ''
+}
+
+async function shouldPromoteNewBabyAsCurrent(user, familyId) {
+  if (!user.currentBabyId) return true
+
+  try {
+    const current = await babiesCollection.doc(user.currentBabyId).get()
+    if (!current.data || current.data.familyId !== familyId || current.data.status === 'deleted') {
+      return true
+    }
+    return isPlaceholderBaby(current.data)
+  } catch (err) {
+    return true
   }
 }
 
@@ -243,14 +328,21 @@ async function getCurrentBabyFast(openid) {
     .orderBy('createTime', 'asc')
     .get()
 
-  const babies = result.data || []
+  const babies = await cleanupPlaceholderBabies(familyId, result.data || [])
   if (!babies.length) {
+    if (user.currentBabyId) {
+      await usersCollection.doc(user._id).update({
+        data: { currentBabyId: '', updateTime: new Date() }
+      })
+    }
     return { currentBabyId: '', currentBaby: null }
   }
 
-  let currentBabyId = user.currentBabyId || ''
-  if (!currentBabyId || !babies.some((b) => b._id === currentBabyId)) {
-    currentBabyId = babies[0]._id
+  const currentBabyId = resolvePreferredCurrentBabyId(babies, user.currentBabyId || '')
+  if (currentBabyId !== (user.currentBabyId || '')) {
+    await usersCollection.doc(user._id).update({
+      data: { currentBabyId, updateTime: new Date() }
+    })
   }
 
   const currentBaby = babies.find((b) => b._id === currentBabyId) || babies[0]
@@ -370,6 +462,8 @@ async function ensureUser(openid) {
     nickName: '宝宝家长',
     avatarUrl: '',
     inviteCode: generateInviteCode(),
+    botBindCode: generateInactiveBindCode(),
+    botBindCodeExpire: new Date(0),
     role: '其他',
     createTime: new Date(),
     updateTime: new Date()
@@ -381,6 +475,10 @@ async function ensureUser(openid) {
 
 function generateInviteCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase()
+}
+
+function generateInactiveBindCode() {
+  return `INIT_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8).toUpperCase()}`
 }
 
 function parseNumberOrNull(value) {
@@ -409,6 +507,8 @@ async function ensureUserBySiriId(userId) {
     nickName: 'Siri用户',
     avatarUrl: '',
     inviteCode: generateInviteCode(),
+    botBindCode: generateInactiveBindCode(),
+    botBindCodeExpire: new Date(0),
     role: '其他',
     createTime: new Date(),
     updateTime: new Date()
@@ -441,6 +541,18 @@ function getChinaDayRange(dateInput) {
   return { start: new Date(startUtcTs), end: new Date(endUtcTs) }
 }
 
+function formatChinaDateKey(dateInput) {
+  const base = dateInput ? new Date(dateInput) : new Date()
+  if (Number.isNaN(base.getTime())) return ''
+
+  const chinaTs = base.getTime() + 8 * 60 * 60 * 1000
+  const chinaDate = new Date(chinaTs)
+  const y = chinaDate.getUTCFullYear()
+  const m = `${chinaDate.getUTCMonth() + 1}`.padStart(2, '0')
+  const d = `${chinaDate.getUTCDate()}`.padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 function parseSiriRecordTime(recordTimeText, baseDate = new Date()) {
   if (!recordTimeText || typeof recordTimeText !== 'string') {
     return new Date()
@@ -464,7 +576,7 @@ function generateReport(records, type, startDate, endDate) {
   const grouped = {}
 
   feedingRecords.forEach(r => {
-    const key = dayjs(r.recordTime).format('YYYY-MM-DD')
+    const key = formatChinaDateKey(r.recordTime)
     if (!grouped[key]) {
       grouped[key] = { date: key, records: [], totalAmount: 0, count: 0 }
     }
@@ -542,32 +654,10 @@ async function listBabies(event, openid) {
     .orderBy('createTime', 'asc')
     .get()
 
-  const babies = result.data || []
-  let currentBabyId = user.currentBabyId || ''
+  const babies = await cleanupPlaceholderBabies(familyId, result.data || [])
+  let currentBabyId = resolvePreferredCurrentBabyId(babies, user.currentBabyId || '')
 
-  if (!babies.length) {
-    const defaultBaby = {
-      familyId,
-      name: '未设置宝宝',
-      birthday: '',
-      weightG: null,
-      heightCm: null,
-      photoUrl: '',
-      status: 'active',
-      createTime: new Date(),
-      updateTime: new Date()
-    }
-    const addRes = await babiesCollection.add({ data: defaultBaby })
-    defaultBaby._id = addRes._id
-    babies.push(defaultBaby)
-    currentBabyId = addRes._id
-    await usersCollection.doc(user._id).update({
-      data: { currentBabyId, updateTime: new Date() }
-    })
-  }
-
-  if (!currentBabyId || !babies.some((b) => b._id === currentBabyId)) {
-    currentBabyId = babies[0]._id
+  if (currentBabyId !== (user.currentBabyId || '')) {
     await usersCollection.doc(user._id).update({
       data: { currentBabyId, updateTime: new Date() }
     })
@@ -622,7 +712,7 @@ async function saveBaby(event, openid) {
   }
   const addRes = await babiesCollection.add({ data })
 
-  if (!user.currentBabyId) {
+  if (await shouldPromoteNewBabyAsCurrent(user, familyId)) {
     await usersCollection.doc(user._id).update({
       data: { currentBabyId: addRes._id, updateTime: new Date() }
     })

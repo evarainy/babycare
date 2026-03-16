@@ -5,29 +5,36 @@
         <image class="profile-avatar" src="{{userInfo.avatarUrl || '/assets/icons/default-avatar.png'}}" mode="aspectFill" />
       </button>
       <view class="profile-form">
+        <text class="section-kicker">个人资料</text>
         <input class="profile-name-input" type="nickname" placeholder="请输入昵称" value="{{userInfo.nickName}}" bindblur="onNickNameBlur" />
         <picker mode="selector" range="{{roleOptions}}" value="{{roleIndex}}" bindchange="onRoleChange">
           <view class="profile-role">家庭身份：{{roleOptions[roleIndex]}}</view>
         </picker>
-        <text class="profile-family text-gray text-small">家庭ID: {{familyId}}</text>
+        <text class="profile-family text-gray text-small">家庭 ID：{{familyId}}</text>
       </view>
     </view>
     <button class="btn-primary profile-save-btn" bindtap="saveProfile">保存个人信息</button>
   </view>
 
-
   <view class="section-card card">
-    <view class="section-title-text">👶 婴儿管理</view>
+    <view class="section-header">
+      <view class="section-head-copy">
+        <text class="section-title-text">宝宝管理</text>
+        <text class="section-desc">切换当前宝宝，维护基础档案信息</text>
+      </view>
+    </view>
 
     <view class="baby-list" wx:if="{{babies.length > 0}}">
       <view class="baby-item {{currentBabyId === item._id ? 'active' : ''}}" wx:for="{{babies}}" wx:key="_id">
         <view class="baby-item-main" bindtap="switchBaby" data-id="{{item._id}}">
           <image class="baby-item-avatar" src="{{item.photoViewUrl || item.photoUrl || '/assets/icons/default-avatar.png'}}" mode="aspectFill" />
           <view class="baby-item-info">
-            <text class="baby-item-name">{{item.name}}</text>
-            <text class="baby-item-meta text-small text-gray">出生{{item.birthday || '--'}} · {{item.weightG || 0}}g · {{item.heightCm || 0}}cm</text>
+            <view class="baby-item-title">
+              <text class="baby-item-name">{{item.name}}</text>
+              <text class="baby-item-tag" wx:if="{{currentBabyId === item._id}}">当前</text>
+            </view>
+            <text class="baby-item-meta text-small text-gray">出生 {{item.birthday || '--'}} · {{item.weightG || 0}}g · {{item.heightCm || 0}}cm</text>
           </view>
-          <text class="baby-item-tag" wx:if="{{currentBabyId === item._id}}">当前</text>
         </view>
         <view class="baby-item-ops">
           <text class="baby-item-edit" bindtap="editBaby" data-baby="{{item}}">编辑</text>
@@ -36,76 +43,102 @@
       </view>
     </view>
 
-    <button class="btn-secondary" bindtap="showAddBaby">+ 添加宝宝</button>
+    <button class="btn-secondary section-btn" bindtap="showAddBaby">添加宝宝</button>
   </view>
 
-
   <view class="section-card card">
-    <view class="section-title-text">👨‍👩‍👧 家庭共享</view>
+    <view class="section-header">
+      <view class="section-head-copy">
+        <text class="section-title-text">家庭共享</text>
+        <text class="section-desc">邀请家人加入并查看家庭成员列表</text>
+      </view>
+    </view>
 
     <view class="setting-item" bindtap="showInviteCode">
       <view class="setting-left">
-        <text class="setting-icon">🔗</text>
-        <text class="setting-label">邀请码邀请</text>
+        <image class="setting-icon-img" src="/assets/icons/setting-invite.svg" mode="aspectFit" />
+        <view>
+          <text class="setting-label">邀请码邀请</text>
+          <text class="setting-desc">生成 6 位邀请码邀请家人加入</text>
+        </view>
       </view>
       <text class="setting-arrow">›</text>
     </view>
 
-    <button class="btn-secondary" open-type="share" bindtap="onTapShareInvite">直接分享小程序邀请加入</button>
+    <button class="btn-secondary section-btn" open-type="share" bindtap="onTapShareInvite">直接分享小程序邀请</button>
 
     <view class="setting-item" bindtap="showJoinFamily">
       <view class="setting-left">
-        <text class="setting-icon">👥</text>
-        <text class="setting-label">加入家庭</text>
+        <image class="setting-icon-img" src="/assets/icons/setting-join.svg" mode="aspectFit" />
+        <view>
+          <text class="setting-label">加入家庭</text>
+          <text class="setting-desc">输入邀请码加入已有家庭</text>
+        </view>
       </view>
       <text class="setting-arrow">›</text>
     </view>
 
     <view class="setting-item" bindtap="showFamilyMembers">
       <view class="setting-left">
-        <text class="setting-icon">👨‍👩‍👧‍👦</text>
-        <text class="setting-label">家庭成员</text>
+        <image class="setting-icon-img" src="/assets/icons/setting-members.svg" mode="aspectFit" />
+        <view>
+          <text class="setting-label">家庭成员</text>
+          <text class="setting-desc">查看已加入当前家庭的成员</text>
+        </view>
       </view>
-      <text class="member-count">{{familyMembers.length}}人</text>
+      <text class="member-count">{{familyMembers.length}} 人</text>
     </view>
   </view>
 
   <view class="section-card card">
-    <view class="section-title-text">🤖 微信群机器人</view>
+    <view class="section-header">
+      <view class="section-head-copy">
+        <text class="section-title-text">微信群机器人</text>
+        <text class="section-desc">让家人在群里也能发消息记喂养</text>
+      </view>
+    </view>
 
     <view class="bot-status">
       <view class="status-dot {{botBound ? 'active' : ''}}"></view>
-      <text class="status-text">{{botBound ? '已绑定群聊' : '未绑定'}}</text>
+      <text class="status-text">{{botBound ? '已绑定群聊' : '尚未绑定群聊'}}</text>
     </view>
 
     <view class="setting-item" bindtap="showBotBindCode">
       <view class="setting-left">
-        <text class="setting-icon">📱</text>
-        <text class="setting-label">生成群绑定码</text>
+        <image class="setting-icon-img" src="/assets/icons/setting-bot.svg" mode="aspectFit" />
+        <view>
+          <text class="setting-label">生成群绑定码</text>
+          <text class="setting-desc">在微信群里发送绑定指令完成关联</text>
+        </view>
       </view>
       <text class="setting-arrow">›</text>
     </view>
 
-    <view class="bot-guide">
-      <text class="guide-title">使用方法：</text>
-      <text class="guide-step">1. 点击上方生成6位绑定码</text>
-      <text class="guide-step">2. 在微信群发送"绑定 XXXXXX"</text>
-      <text class="guide-step">3. 家人@机器人发送喂养信息即可记录</text>
-      <text class="guide-tip">💡 语音消息请长按转文字后发送</text>
+    <view class="guide-card">
+      <text class="guide-title">使用说明</text>
+      <text class="guide-step">1. 点击上方生成 6 位绑定码</text>
+      <text class="guide-step">2. 在微信群发送“绑定 XXXXXX”</text>
+      <text class="guide-step">3. 家人 @机器人 发送喂养信息即可同步记录</text>
+      <text class="guide-tip">语音消息建议先转文字后发送，识别更稳定</text>
     </view>
   </view>
 
   <view class="section-card card">
-    <view class="section-title-text">🍎 Siri快捷指令</view>
+    <view class="section-header">
+      <view class="section-head-copy">
+        <text class="section-title-text">Siri 快捷指令</text>
+        <text class="section-desc">适合 iPhone 上快速语音录入</text>
+      </view>
+    </view>
 
-    <view class="siri-guide">
-      <text class="guide-step">1. 打开iPhone「快捷指令」App</text>
-      <text class="guide-step">2. 扫描下方二维码安装快捷指令</text>
-      <text class="guide-step">3. 对Siri说"记录喂奶"即可使用</text>
+    <view class="guide-card">
+      <text class="guide-step">1. 打开 iPhone“快捷指令” App</text>
+      <text class="guide-step">2. 安装对应的快捷指令模版</text>
+      <text class="guide-step">3. 对 Siri 说“记录喂奶”即可使用</text>
     </view>
 
     <view class="siri-config">
-      <text class="config-label">API地址（复制到快捷指令）：</text>
+      <text class="config-label">API 地址（点击即可复制）</text>
       <view class="config-value" bindtap="copyApiUrl">
         <text class="api-url">{{apiUrl}}</text>
         <text class="copy-btn">复制</text>
@@ -114,28 +147,42 @@
   </view>
 
   <view class="section-card card">
-    <view class="section-title-text">⚙️ 其他设置</view>
+    <view class="section-header">
+      <view class="section-head-copy">
+        <text class="section-title-text">其他设置</text>
+        <text class="section-desc">深色模式、导出与隐私说明</text>
+      </view>
+    </view>
 
     <view class="setting-item">
       <view class="setting-left">
-        <text class="setting-icon">🌙</text>
-        <text class="setting-label">深色模式</text>
+        <image class="setting-icon-img" src="/assets/icons/setting-darkmode.svg" mode="aspectFit" />
+        <view>
+          <text class="setting-label">深色模式</text>
+          <text class="setting-desc">夜间环境下减轻视觉刺激</text>
+        </view>
       </view>
       <switch checked="{{darkMode}}" bindchange="toggleDarkMode" color="#FF8FAB" />
     </view>
 
     <view class="setting-item" bindtap="exportData">
       <view class="setting-left">
-        <text class="setting-icon">📤</text>
-        <text class="setting-label">导出数据</text>
+        <image class="setting-icon-img" src="/assets/icons/setting-export.svg" mode="aspectFit" />
+        <view>
+          <text class="setting-label">导出数据</text>
+          <text class="setting-desc">导出最近记录为结构化数据</text>
+        </view>
       </view>
       <text class="setting-arrow">›</text>
     </view>
 
     <view class="setting-item" bindtap="showPrivacy">
       <view class="setting-left">
-        <text class="setting-icon">🔒</text>
-        <text class="setting-label">隐私说明</text>
+        <image class="setting-icon-img" src="/assets/icons/setting-privacy.svg" mode="aspectFit" />
+        <view>
+          <text class="setting-label">隐私说明</text>
+          <text class="setting-desc">了解数据存储与访问边界</text>
+        </view>
       </view>
       <text class="setting-arrow">›</text>
     </view>
@@ -143,37 +190,40 @@
 
   <view class="version-info">
     <text class="version-text">宝宝成长手记 v1.0.0</text>
-    <text class="version-desc text-gray text-small">数据加密存储于您的腾讯云账号，我们无法查看</text>
+    <text class="version-desc text-gray text-small">数据加密存储在你的腾讯云账号中，我们无法查看你的家庭数据。</text>
   </view>
 </view>
 
 <view class="invite-modal" wx:if="{{showInviteModal}}">
   <view class="modal-mask" bindtap="closeInviteModal"></view>
   <view class="modal-content">
+    <view class="modal-handle"></view>
     <view class="modal-title">邀请家人加入</view>
     <view class="invite-code-display">
       <text class="invite-code">{{inviteCode}}</text>
     </view>
-    <text class="invite-tip">将此6位邀请码发给家人，家人在设置页输入即可加入同一家庭</text>
+    <text class="invite-tip">将这组 6 位邀请码发给家人，对方在设置页输入后即可加入同一家庭。</text>
     <button class="btn-primary" bindtap="copyInviteCode">复制邀请码</button>
-    <button class="btn-secondary" style="margin-top: 16rpx;" bindtap="closeInviteModal">关闭</button>
+    <button class="btn-secondary modal-btn" bindtap="closeInviteModal">关闭</button>
   </view>
 </view>
 
 <view class="join-modal" wx:if="{{showJoinModal}}">
   <view class="modal-mask" bindtap="closeJoinModal"></view>
   <view class="modal-content">
+    <view class="modal-handle"></view>
     <view class="modal-title">加入家庭</view>
-    <input class="join-input" placeholder="输入6位邀请码" value="{{joinCode}}" bindinput="onJoinCodeInput" maxlength="6" />
+    <text class="modal-subtitle">输入家人分享给你的 6 位邀请码</text>
+    <input class="join-input" placeholder="输入 6 位邀请码" value="{{joinCode}}" bindinput="onJoinCodeInput" maxlength="6" />
     <button class="btn-primary" bindtap="joinFamily">确认加入</button>
-    <button class="btn-secondary" style="margin-top: 16rpx;" bindtap="closeJoinModal">取消</button>
+    <button class="btn-secondary modal-btn" bindtap="closeJoinModal">取消</button>
   </view>
 </view>
-
 
 <view class="join-modal" wx:if="{{showBabyModal}}">
   <view class="modal-mask" bindtap="closeBabyModal"></view>
   <view class="modal-content">
+    <view class="modal-handle"></view>
     <view class="modal-title">{{editingBabyId ? '编辑宝宝' : '添加宝宝'}}</view>
     <input class="join-input" placeholder="宝宝姓名" value="{{babyForm.name}}" bindinput="onBabyInput" data-key="name" maxlength="20" />
 
@@ -184,8 +234,8 @@
       </picker>
     </view>
 
-    <input class="join-input" placeholder="体重(g)" type="number" value="{{babyForm.weightG}}" bindinput="onBabyInput" data-key="weightG" />
-    <input class="join-input" placeholder="身高(cm)" type="number" value="{{babyForm.heightCm}}" bindinput="onBabyInput" data-key="heightCm" />
+    <input class="join-input" placeholder="体重（g）" type="number" value="{{babyForm.weightG}}" bindinput="onBabyInput" data-key="weightG" />
+    <input class="join-input" placeholder="身高（cm）" type="number" value="{{babyForm.heightCm}}" bindinput="onBabyInput" data-key="heightCm" />
 
     <view class="field-wrap">
       <text class="field-label">宝宝照片</text>
@@ -193,14 +243,14 @@
         <image class="photo-preview" wx:if="{{babyForm.photoUrl}}" src="{{babyForm.photoUrl}}" mode="aspectFill" />
         <view class="photo-placeholder" wx:else>暂无照片</view>
         <view class="photo-buttons">
-          <button class="btn-secondary btn-small" bindtap="selectBabyPhoto">上传/拍照</button>
+          <button class="btn-secondary btn-small" bindtap="selectBabyPhoto">上传或拍照</button>
           <button class="btn-secondary btn-small" bindtap="clearBabyPhoto" wx:if="{{babyForm.photoUrl}}">移除</button>
         </view>
       </view>
     </view>
 
     <button class="btn-primary" bindtap="saveBaby">保存</button>
-    <button class="btn-secondary" style="margin-top: 16rpx;" bindtap="closeBabyModal">取消</button>
+    <button class="btn-secondary modal-btn" bindtap="closeBabyModal">取消</button>
   </view>
 </view>
 

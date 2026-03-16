@@ -1,5 +1,5 @@
 <view class="page {{darkMode ? 'page-dark' : ''}}">
-  <view class="period-selector">
+  <view class="period-selector card">
     <view
       class="period-btn {{period === item.value ? 'active' : ''}}"
       wx:for="{{periodOptions}}"
@@ -10,7 +10,10 @@
   </view>
 
   <view class="summary-card card">
-    <view class="card-title">📊 {{periodLabel}}统计</view>
+    <view class="card-heading">
+      <text class="section-kicker">喂养统计</text>
+      <text class="section-copy">{{periodLabel}}内的整体趋势概览</text>
+    </view>
     <view class="stats-grid">
       <view class="stat-item">
         <text class="stat-val">{{report.summary.totalCount}}</text>
@@ -18,7 +21,7 @@
       </view>
       <view class="stat-item">
         <text class="stat-val">{{report.summary.totalAmount}}</text>
-        <text class="stat-key">总奶量(ml)</text>
+        <text class="stat-key">总奶量 ml</text>
       </view>
       <view class="stat-item">
         <text class="stat-val">{{report.summary.avgDailyAmount}}</text>
@@ -36,25 +39,31 @@
   </view>
 
   <view class="chart-card card">
-    <view class="card-title">📈 每日奶量趋势</view>
+    <view class="card-heading">
+      <text class="section-kicker">每日趋势</text>
+      <text class="section-copy">纵向查看每天总奶量变化</text>
+    </view>
     <view class="bar-chart">
       <view class="bar-item" wx:for="{{chartData}}" wx:key="date">
+        <text class="bar-val">{{item.totalAmount}}</text>
         <view class="bar-wrap">
           <view class="bar-fill" style="height: {{item.heightPercent}}%"></view>
         </view>
         <text class="bar-label">{{item.dateLabel}}</text>
-        <text class="bar-val">{{item.totalAmount}}</text>
       </view>
     </view>
   </view>
 
   <view class="daily-list card">
-    <view class="card-title">📅 每日明细</view>
+    <view class="card-heading">
+      <text class="section-kicker">每日明细</text>
+      <text class="section-copy">快速对比每天次数与奶量分布</text>
+    </view>
     <view class="daily-item" wx:for="{{report.days}}" wx:key="date">
       <view class="daily-header">
         <text class="daily-date">{{item.date}}</text>
         <view class="daily-stats">
-          <text class="daily-count">{{item.count}}次</text>
+          <text class="daily-count">{{item.count}} 次</text>
           <text class="daily-amount">{{item.totalAmount}}ml</text>
         </view>
       </view>
@@ -65,9 +74,12 @@
   </view>
 
   <view class="insight-card card" wx:if="{{insights.length > 0}}">
-    <view class="card-title">💡 喂养洞察</view>
+    <view class="card-heading">
+      <text class="section-kicker">喂养洞察</text>
+      <text class="section-copy">基于最近记录自动生成提示</text>
+    </view>
     <view class="insight-item" wx:for="{{insights}}" wx:key="text">
-      <text class="insight-icon">{{item.icon}}</text>
+      <image class="insight-icon-img" src="{{item.iconPath}}" mode="aspectFit" />
       <text class="insight-text">{{item.text}}</text>
     </view>
   </view>

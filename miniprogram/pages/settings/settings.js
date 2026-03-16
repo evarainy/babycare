@@ -399,6 +399,9 @@ Page({
     wx.setStorageSync('darkMode', darkMode)
     const app = getApp()
     app.globalData.darkMode = darkMode
+    if (app.applyTabBarStyle) {
+      app.applyTabBarStyle(darkMode)
+    }
     wx.showToast({ title: darkMode ? '已启用深色模式' : '已关闭深色模式', icon: 'none' })
   },
 

@@ -28,6 +28,172 @@ const SYSTEM_PROMPT = `你是育婴记录助手。从用户输入提取多条育
 "游泳20分钟" → [{"type":"swimming","amount":null,"side":null,"feedingType":null,"duration":20,"note":"","recordTime":null,"confidence":0.9,"needConfirm":false}]
 "今天早上8点喂了80的奶粉然后拉了屎，12点亲喂了20分钟" → [{"type":"bottle","amount":80,"side":null,"feedingType":"奶粉","duration":null,"note":"","recordTime":"08:00","confidence":0.9,"needConfirm":false},{"type":"diaper","amount":null,"side":null,"feedingType":null,"duration":null,"note":"","recordTime":"08:05","confidence":0.9,"needConfirm":false},{"type":"breastfeeding","amount":null,"side":"双","feedingType":null,"duration":20,"note":"","recordTime":"12:00","confidence":0.9,"needConfirm":false}]`
 
+const ENHANCED_SYSTEM_PROMPT = `你是宝宝护理记录助手。请从用户输入中提取一条或多条记录，返回 JSON 数组。
+
+记录类型：
+- breastfeeding: 亲喂，记录 side(left/right/both) 和 duration(分钟)
+- bottle: 瓶喂，记录 feedingType(奶粉/母乳/水/补剂) 和 amount(ml)
+- food: 辅食，记录 amount(g)
+- supplement: 补剂，记录 itemName(AD/D/乳铁蛋白/益生菌等)、amount、unit(g/ml/粒)
+- medicine: 药物，记录 itemName、amount、unit(g/ml/粒)、note
+- outdoor: 户外，记录 itemName(事件)、recordTime、note
+- swimming: 游泳，记录 duration(分钟)
+- diaper: 换尿布
+- sleep: 睡眠，记录 duration(分钟)
+- other: 仅在无法归类时使用
+
+返回格式：
+[{
+  "type":"记录类型",
+  "itemName":"名称或null",
+  "amount":数字或null,
+  "unit":"g|ml|粒|null",
+  "side":"left|right|both|null",
+  "feedingType":"奶粉|母乳|水|补剂|null",
+  "duration":数字或null,
+  "note":"备注",
+  "recordTime":"HH:mm"或null,
+  "confidence":0-1,
+  "needConfirm":true|false
+}]
+
+规则：
+1. 亲喂未说明左右时默认 both。
+2. 瓶喂未说明类型时默认 奶粉。
+3. “AD、维生素D、D3、乳铁蛋白、益生菌”等优先归类为 supplement，不要归类为 other。
+4. “药、喂药、吃药、退烧药、感冒药、布洛芬、美林、头孢、阿莫西林”等优先归类为 medicine，不要归类为 other。
+5. “户外、外出、出去玩、晒太阳、散步、公园、遛弯”等优先归类为 outdoor，不要归类为 other。
+6. 时间按文本中的绝对或相对时间推断，无法确定时可为 null。
+7. 一条记录对应一个 JSON 对象，多条记录返回数组。`
+
+function enhancedFallbackParse(text, currentTime) {
+  const records = []
+  const segments = text.split(/[，,。；;\n]/).filter((s) => s.trim())
+  const supplementKeywords = ['AD', 'ad', '维生素D', '维D', 'D3', '乳铁蛋白', '益生菌']
+  const medicineKeywords = ['药', '喂药', '吃药', '用药', '退烧药', '感冒药', '布洛芬', '美林', '头孢', '阿莫西林', '药水']
+  const outdoorKeywords = ['户外', '外出', '出去玩', '晒太阳', '散步', '公园', '遛弯', '草地', '广场', '小区玩']
+
+  const detectUnit = (segment) => {
+    if (/ml|毫升|ML/.test(segment)) return 'ml'
+    if (/g|克/.test(segment)) return 'g'
+    if (/粒|颗|丸|片|袋|包|滴/.test(segment)) return '粒'
+    return null
+  }
+
+  const detectItemName = (segment, keywords) => {
+    const found = keywords.find((keyword) => segment.includes(keyword))
+    return found || null
+  }
+
+  for (const rawSegment of segments) {
+    const segment = rawSegment.trim()
+    if (!segment) continue
+
+    const result = {
+      type: 'other',
+      itemName: null,
+      amount: null,
+      unit: null,
+      side: null,
+      feedingType: null,
+      duration: null,
+      note: segment,
+      recordTime: inferTimeFromText(segment, currentTime),
+      confidence: 0.65,
+      needConfirm: true
+    }
+
+    const amountMatch = segment.match(/(\d+(?:\.\d+)?)/)
+    if (amountMatch) result.amount = parseFloat(amountMatch[1])
+    result.unit = detectUnit(segment)
+
+    if (/左|左侧/.test(segment)) result.side = 'left'
+    else if (/右|右侧/.test(segment)) result.side = 'right'
+    else if (/双|两边|双侧/.test(segment)) result.side = 'both'
+
+    if (/奶粉/.test(segment)) result.feedingType = '奶粉'
+    else if (/母乳/.test(segment)) result.feedingType = '母乳'
+    else if (/(^|[^药])水/.test(segment)) result.feedingType = '水'
+    else if (/补剂/.test(segment)) result.feedingType = '补剂'
+
+    if (/亲喂|母乳亲喂|吸奶/.test(segment)) {
+      result.type = 'breastfeeding'
+      result.side = result.side || 'both'
+      const durationMatch = segment.match(/(\d+)\s*(?:分钟|min|分)/)
+      if (durationMatch) result.duration = parseInt(durationMatch[1], 10)
+      result.note = ''
+      result.confidence = 0.9
+    } else if (/游泳/.test(segment)) {
+      result.type = 'swimming'
+      const durationMatch = segment.match(/(\d+)\s*(?:分钟|min|分)/)
+      if (durationMatch) result.duration = parseInt(durationMatch[1], 10)
+      result.amount = null
+      result.unit = null
+      result.confidence = 0.9
+    } else if (/尿布|拉屎|便便|换尿布|换纸尿裤/.test(segment)) {
+      result.type = 'diaper'
+      result.amount = null
+      result.unit = null
+      result.note = ''
+      result.confidence = 0.95
+    } else if (/睡|午睡|小睡|睡觉/.test(segment)) {
+      result.type = 'sleep'
+      const durationMatch = segment.match(/(\d+)\s*(?:分钟|min|分)/)
+      if (durationMatch) result.duration = parseInt(durationMatch[1], 10)
+      result.amount = null
+      result.unit = null
+      result.confidence = 0.85
+    } else if (/辅食|米粉|米糊|果泥|肉泥|蔬菜泥/.test(segment) || result.unit === 'g') {
+      result.type = 'food'
+      result.unit = 'g'
+      result.confidence = 0.85
+    } else if (supplementKeywords.some((keyword) => segment.includes(keyword)) || /补剂/.test(segment)) {
+      result.type = 'supplement'
+      result.itemName = detectItemName(segment, supplementKeywords) || '补剂'
+      result.unit = result.unit || '粒'
+      result.confidence = 0.92
+      result.needConfirm = !result.amount
+    } else if (medicineKeywords.some((keyword) => segment.includes(keyword))) {
+      result.type = 'medicine'
+      result.itemName = detectItemName(segment, medicineKeywords) || '药物'
+      result.unit = result.unit || 'ml'
+      result.confidence = 0.92
+      result.needConfirm = !result.amount
+    } else if (outdoorKeywords.some((keyword) => segment.includes(keyword))) {
+      result.type = 'outdoor'
+      result.itemName = detectItemName(segment, outdoorKeywords) || '户外'
+      result.amount = null
+      result.unit = null
+      result.duration = null
+      result.confidence = 0.9
+      result.needConfirm = false
+    } else if (/喝|喂|奶/.test(segment) && result.amount) {
+      result.type = 'bottle'
+      result.feedingType = result.feedingType || '奶粉'
+      result.unit = 'ml'
+      result.note = ''
+      result.confidence = 0.88
+      result.needConfirm = false
+    }
+
+    records.push(result)
+  }
+
+  return records.length > 0 ? records : [{
+    type: 'other',
+    itemName: null,
+    amount: null,
+    unit: null,
+    side: null,
+    feedingType: null,
+    duration: null,
+    note: text,
+    recordTime: null,
+    confidence: 0.3,
+    needConfirm: true
+  }]
+}
+
 exports.main = async (event, context) => {
   const t0 = Date.now()
   const perf = { 
@@ -56,7 +222,7 @@ exports.main = async (event, context) => {
   perf.stages.init = t1 - t0
   console.log(`[PERF] 参数检查完成, t=${t1 - t0}ms`)
 
-  const fallback = fallbackParse(text, currentTime)
+  const fallback = enhancedFallbackParse(text, currentTime)
   const t2 = Date.now()
   perf.stages.fallback = t2 - t1
   console.log(`[PERF] fallback解析完成, t=${t2 - t0}ms, 记录数=${fallback.length}`)
@@ -108,12 +274,24 @@ exports.main = async (event, context) => {
       parsed = [parsed]
     }
 
+    if (parsed.length === 0) {
+      console.log('LLM返回空结果，使用fallback')
+      perf.total = Date.now() - t0
+      return { code: 0, data: fallback, rawText: text, fallback: true, reason: 'LLM返回空结果', perf }
+    }
+
     for (const record of parsed) {
       if (record.amount && typeof record.amount === 'string') {
         record.amount = parseFloat(record.amount) || null
       }
       if (record.duration && typeof record.duration === 'string') {
         record.duration = parseFloat(record.duration) || null
+      }
+      if (record.itemName === undefined) {
+        record.itemName = null
+      }
+      if (record.unit === undefined) {
+        record.unit = null
       }
     }
 
@@ -159,7 +337,7 @@ function callLLMWithPerf(baseURL, apiKey, model, userMessage) {
     const requestBody = {
       model: model,
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: ENHANCED_SYSTEM_PROMPT },
         { role: 'user', content: userMessage }
       ],
       temperature: 0.1,
@@ -489,7 +667,35 @@ function extractJson(content) {
 }
 
 function inferTimeFromText(text, currentTime) {
-  const now = new Date(currentTime || Date.now())
+  const now = new Date()
+  if (currentTime instanceof Date && !Number.isNaN(currentTime.getTime())) {
+    now.setTime(currentTime.getTime())
+  } else if (typeof currentTime === 'string') {
+    const hmMatch = currentTime.match(/^(\d{1,2}):(\d{1,2})$/)
+    if (hmMatch) {
+      now.setHours(Number(hmMatch[1]), Number(hmMatch[2]), 0, 0)
+    } else {
+      const parsedCurrent = new Date(currentTime)
+      if (!Number.isNaN(parsedCurrent.getTime())) {
+        now.setTime(parsedCurrent.getTime())
+      }
+    }
+  }
+
+  const relativePatterns = [
+    { regex: /(\d+)\s*小时前/, minutes: 60 },
+    { regex: /半小时前/, minutes: 30, fixed: true },
+    { regex: /(\d+)\s*分钟(?:前|之前)/, minutes: 1 }
+  ]
+
+  for (const pattern of relativePatterns) {
+    const match = text.match(pattern.regex)
+    if (match) {
+      const delta = pattern.fixed ? pattern.minutes : parseInt(match[1], 10) * pattern.minutes
+      const target = new Date(now.getTime() - delta * 60000)
+      return `${target.getHours().toString().padStart(2, '0')}:${target.getMinutes().toString().padStart(2, '0')}`
+    }
+  }
   
   const timePatterns = [
     { regex: /(\d{1,2})[:点时](\d{0,2})/, priority: 1 },
