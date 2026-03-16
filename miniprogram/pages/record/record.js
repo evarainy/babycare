@@ -1,5 +1,27 @@
 const { callApi, formatTimeHHMM, formatInterval, getTypeLabel, getTypeIconPath, getSideLabel, formatAmount } = require('../../utils/api')
 
+function normalizeSummaryText(value) {
+  return String(value || '').trim().toLowerCase()
+}
+
+function containsAnyKeyword(value, keywords = []) {
+  const normalized = normalizeSummaryText(value)
+  return keywords.some((keyword) => normalized.includes(normalizeSummaryText(keyword)))
+}
+
+function isWaterBottleRecord(record) {
+  return record && record.type === 'bottle' && containsAnyKeyword(record.feedingType, [
+    '\u6c34',
+    '\u996e\u6c34',
+    '\u767d\u5f00\u6c34',
+    'water'
+  ])
+}
+
+function isMilkFeedingRecord(record) {
+  return record && (record.type === 'breastfeeding' || (record.type === 'bottle' && !isWaterBottleRecord(record)))
+}
+
 const createDefaultForm = (timeStr = '') => ({
   type: 'breastfeeding',
   feedingType: '奶粉',
@@ -132,8 +154,8 @@ Page({
         .filter((r) => r.status !== 'deleted')
         .map((r, i, arr) => this.formatRecord(r, i, arr))
 
-      const feedingRecords = records.filter((r) => r.type === 'breastfeeding' || r.type === 'bottle')
-      const totalAmount = feedingRecords.reduce((sum, r) => sum + (r.amount || 0), 0)
+      const feedingRecords = records.filter((r) => isMilkFeedingRecord(r))
+      const totalAmount = feedingRecords.reduce((sum, r) => sum + (Number(r.amount) || 0), 0)
 
       let avgInterval = '--'
       if (feedingRecords.length > 1) {

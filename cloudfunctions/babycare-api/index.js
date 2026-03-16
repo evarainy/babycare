@@ -216,22 +216,23 @@ async function getTodaySummary(event, openid) {
     .get()
 
   const records = (result.data || []).filter(r => isRecordMatchCurrentBaby(r, currentBabyId))
-  const feedingRecords = records.filter(r => r.type === 'breastfeeding' || r.type === 'bottle')
-  const milkRecords = feedingRecords.filter((r) => r.type === 'breastfeeding' || r.feedingType !== '水')
-  const totalAmount = milkRecords.reduce((sum, r) => sum + (r.amount || 0), 0)
+  const confirmedRecords = records.filter((r) => r.status === 'confirmed')
+  const feedingRecords = confirmedRecords.filter((r) => r.type === 'breastfeeding' || r.type === 'bottle')
+  const milkRecords = feedingRecords.filter((r) => r.type === 'breastfeeding' || isMilkBottleRecord(r))
+  const totalAmount = milkRecords.reduce((sum, r) => sum + (Number(r.amount) || 0), 0)
   const lastRecord = feedingRecords[0] || null
 
   const formulaAmount = feedingRecords
-    .filter(r => r.feedingType === '奶粉')
-    .reduce((sum, r) => sum + (r.amount || 0), 0)
+    .filter((r) => isFormulaBottleRecord(r))
+    .reduce((sum, r) => sum + (Number(r.amount) || 0), 0)
   const breastMilkAmount = feedingRecords
-    .filter(r => r.feedingType === '母乳')
-    .reduce((sum, r) => sum + (r.amount || 0), 0)
-  const waterAmount = feedingRecords
-    .filter((r) => r.feedingType === '水')
-    .reduce((sum, r) => sum + (r.amount || 0), 0)
+    .filter((r) => isBreastMilkBottleRecord(r))
+    .reduce((sum, r) => sum + (Number(r.amount) || 0), 0)
+  const waterAmount = confirmedRecords
+    .filter((r) => isWaterIntakeRecord(r))
+    .reduce((sum, r) => sum + (Number(r.amount) || 0), 0)
 
-  const foodRecords = records.filter(r => r.type === 'food')
+  const foodRecords = confirmedRecords.filter(r => r.type === 'food')
   const foodAmount = foodRecords.reduce((sum, r) => sum + (r.amount || 0), 0)
 
   let intervalMinutes = null
@@ -242,7 +243,7 @@ async function getTodaySummary(event, openid) {
   return {
     code: 0,
     data: {
-      todayCount: feedingRecords.length,
+      todayCount: milkRecords.length,
       totalAmount,
       formulaAmount,
       breastMilkAmount,
@@ -524,6 +525,49 @@ function isRecordMatchCurrentBaby(record, currentBabyId) {
   return !recordBabyId || recordBabyId === currentBabyId
 }
 
+function normalizeSummaryText(value) {
+  return String(value || '').trim().toLowerCase()
+}
+
+function containsAnyKeyword(value, keywords = []) {
+  const normalized = normalizeSummaryText(value)
+  return keywords.some((keyword) => normalized.includes(normalizeSummaryText(keyword)))
+}
+
+function isWaterBottleRecord(record) {
+  return record && record.type === 'bottle' && containsAnyKeyword(record.feedingType, [
+    '\u6c34',
+    '\u996e\u6c34',
+    '\u767d\u5f00\u6c34',
+    'water'
+  ])
+}
+
+function isMilkBottleRecord(record) {
+  return record && record.type === 'bottle' && !isWaterBottleRecord(record)
+}
+
+function isFormulaBottleRecord(record) {
+  return record && record.type === 'bottle' && containsAnyKeyword(record.feedingType, [
+    '\u5976\u7c89',
+    'formula'
+  ])
+}
+
+function isBreastMilkBottleRecord(record) {
+  return record && record.type === 'bottle' && containsAnyKeyword(record.feedingType, [
+    '\u6bcd\u4e73',
+    'breast'
+  ])
+}
+
+function isWaterIntakeRecord(record) {
+  if (isWaterBottleRecord(record)) return true
+  if (!record || !['supplement', 'medicine'].includes(record.type)) return false
+  return containsAnyKeyword(record.itemName, ['\u6c34', '\u996e\u6c34', '\u767d\u5f00\u6c34', 'water'])
+    && containsAnyKeyword(record.unit, ['ml'])
+}
+
 
 function getChinaDayRange(dateInput) {
   const base = dateInput ? dayjs(dateInput).toDate() : new Date()
@@ -572,7 +616,7 @@ function parseSiriRecordTime(recordTimeText, baseDate = new Date()) {
 }
 
 function generateReport(records, type, startDate, endDate) {
-  const feedingRecords = records.filter(r => r.type === 'breastfeeding' || r.type === 'bottle')
+  const feedingRecords = records.filter((r) => r.type === 'breastfeeding' || isMilkBottleRecord(r))
   const grouped = {}
 
   feedingRecords.forEach(r => {
